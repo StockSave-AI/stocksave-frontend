@@ -1,0 +1,71 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    fontFamily: {
+      sans: ["Inter", "sans-serif"],
+    },
+    extend: {
+      colors: {
+        primary: {
+          50: "#E6F7F1",
+          100: "#CDEFE3",
+          200: "#9BDFC7",
+          300: "#69CFAB",
+          400: "#37BF8F",
+          500: "#0FA87A",
+          600: "#0C8661",
+          700: "#096448",
+          800: "#064230",
+          900: "#032118",
+        },
+
+        secondary: {
+          50: "#E8F0FE",
+          100: "#D2E3FC",
+          200: "#A4C8F9",
+          300: "#76ADF6",
+          400: "#4A92F3",
+          500: "#2F6FED",
+          600: "#2559BE",
+          700: "#1B438F",
+          800: "#122D60",
+          900: "#091730",
+        },
+        neutral: {
+          50: "#F9FAFB",
+          100: "#F3F4F6",
+          200: "#E5E7EB",
+          300: "#D1D5DB",
+          400: "#9CA3AF",
+          500: "#6B7280",
+          600: "#4B5563",
+          700: "#374151",
+          800: "#1F2937",
+          900: "#111827",
+        },
+        success: "#16A34A",
+        warning: "#F59E0B",
+        error: "#DC2626",
+        info: "#2563EB",
+      },
+      borderRadius: {
+        card: "16px",
+        button: "12px",
+      },
+      boxShadow: {
+        card: "0 4px 20px rgba(0,0,0,0.05)",
+      },
+      fontSize: {
+        h1: ["32px", { lineHeight: "40px", fontWeight: "700" }],
+        h2: ["24px", { lineHeight: "32px", fontWeight: "600" }],
+        h3: ["20px", { lineHeight: "28px", fontWeight: "600" }],
+      },
+      spacing: {
+        18: "4.5rem",
+        22: "5.5rem",
+      },
+    },
+  },
+  plugins: [],
+};
