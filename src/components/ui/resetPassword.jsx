@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { FiCheck, FiEye, FiEyeOff } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import ActionButton from "../ui/ActionButton";
-import SignupHeader from "../ui/SignupHeader";
+import ActionButton from "./ActionButton";
+import SignupHeader from "./SignupHeader";
 import toast from "react-hot-toast";
 
 function ResetPassword() {

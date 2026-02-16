@@ -129,7 +129,7 @@ function Signup() {
             <BottomLink
               text="Login"
               onClick={() => navigate("/login")}
-              poser=" Already have an account?"
+              poser=" Already have an account? "
             />
           </form>
         </div>

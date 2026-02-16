@@ -27,7 +27,7 @@ function VerifyPhone() {
       const newOtp = [...otp];
       newOtp[index] = value;
       setOtp(newOtp);
-      // auto-focus next input
+
       if (value && index < 5) {
         document.getElementById(`otp-${index + 1}`)?.focus();
       }
@@ -39,7 +39,7 @@ function VerifyPhone() {
     const otpValue = otp.join("");
     console.log("Entered OTP:", otpValue);
     // Add API call to verify OTP here
-    navigate("/reset-password"); // example next step
+    navigate("/reset-password");
   };
 
   return (
@@ -60,7 +60,6 @@ function VerifyPhone() {
         </p>
       </div>
 
-      {/* OTP Input */}
       <form onSubmit={onSubmit} className="p-6 sm:p-8 space-y-6">
         <div className="flex justify-center gap-2">
           {otp.map((digit, index) => (
@@ -93,6 +92,27 @@ function VerifyPhone() {
         </p>
 
         <ActionButton text="Verify OTP" />
+
+        <div className="mt-6 w-full bg-neutral-100 py-4 px-4 text-center rounded-md">
+          <p className="text-sm text-neutral-600">
+            Didn’t receive the OTP?{" "}
+            <span
+              onClick={() => navigate("/contact")}
+              className="text-green-600 font-medium cursor-pointer hover:underline"
+            >
+              Contact Support
+            </span>
+          </p>
+        </div>
+
+        <div className="text-center mt-4">
+          <span
+            onClick={() => navigate("/")}
+            className="text-sm text-primary-600 cursor-pointer hover:underline"
+          >
+            Back to Home
+          </span>
+        </div>
       </form>
     </>
   );

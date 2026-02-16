@@ -5,7 +5,9 @@ import { Toaster } from "react-hot-toast";
 import Loader from "./components/ui/Loader";
 import Home from "./components/pages/Home";
 import VerifyPhone from "./components/sections/VerifyPhone";
-import ResetPassword from "./components/ui/resetPassword";
+import ResetPassword from "./components/ui/ResetPassword";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import CustomerDashboard from "./components/pages/CustomerDashboard";
 
 const About = lazy(() => import("./components/pages/About"));
 const Features = lazy(() => import("./components/pages/Features"));
@@ -50,6 +52,9 @@ function App() {
           <Route path="/forgot-password" element={<ForgetPassword />} />
           <Route path="/verify-phone" element={<VerifyPhone />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/dashboard" element={<ProtectedRoute />}>
+            <Route index element={<CustomerDashboard />} />
+          </Route>
         </Routes>
       </Suspense>
     </>

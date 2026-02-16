@@ -24,6 +24,7 @@ function Login() {
 
     toast.success("Logged in successfully");
     console.log({ ...data, role });
+    navigate("/dashboard");
     // Call your login API here if needed
   };
 
