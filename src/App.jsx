@@ -5,8 +5,8 @@ import { Toaster } from "react-hot-toast";
 import Loader from "./components/ui/Loader";
 import Home from "./components/pages/Home";
 import VerifyPhone from "./components/sections/VerifyPhone";
-import ResetPassword from "./components/ui/ResetPassword";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import ResetPassword from "./components/ui/ResetPassword";
 import CustomerDashboard from "./components/pages/CustomerDashboard";
 
 const About = lazy(() => import("./components/pages/About"));
