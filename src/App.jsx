@@ -6,8 +6,8 @@ import Loader from "./components/ui/Loader";
 import Home from "./components/pages/Home";
 import VerifyPhone from "./components/sections/VerifyPhone";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import ResetPassword from "./components/ui/ResetPassword";
 import CustomerDashboard from "./components/pages/CustomerDashboard";
+import ResetPassword from "./components/ui/ResetPassword";
 
 const About = lazy(() => import("./components/pages/About"));
 const Features = lazy(() => import("./components/pages/Features"));
@@ -17,6 +17,7 @@ const Signup = lazy(() => import("./components/pages/Signup"));
 const ForgetPassword = lazy(() => import("./components/pages/ForgetPassword"));
 
 function App() {
+
   return (
     <>
       <Toaster
