@@ -19,7 +19,6 @@ export default {
           800: "#064230",
           900: "#032118",
         },
-
         secondary: {
           50: "#E8F0FE",
           100: "#D2E3FC",
@@ -27,6 +26,7 @@ export default {
           300: "#76ADF6",
           400: "#4A92F3",
           500: "#2F6FED",
+          550: "#1A0CE6",
           600: "#2559BE",
           700: "#1B438F",
           800: "#122D60",
@@ -49,22 +49,14 @@ export default {
         error: "#DC2626",
         info: "#2563EB",
       },
-      borderRadius: {
-        card: "16px",
-        button: "12px",
-      },
-      boxShadow: {
-        card: "0 4px 20px rgba(0,0,0,0.05)",
-      },
+      borderRadius: { card: "16px", button: "12px" },
+      boxShadow: { card: "0 4px 20px rgba(0,0,0,0.05)" },
       fontSize: {
         h1: ["32px", { lineHeight: "40px", fontWeight: "700" }],
         h2: ["24px", { lineHeight: "32px", fontWeight: "600" }],
         h3: ["20px", { lineHeight: "28px", fontWeight: "600" }],
       },
-      spacing: {
-        18: "4.5rem",
-        22: "5.5rem",
-      },
+      spacing: { 18: "4.5rem", 22: "5.5rem" },
     },
   },
   plugins: [],

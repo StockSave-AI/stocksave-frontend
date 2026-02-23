@@ -9,7 +9,7 @@ export default function Pricing() {
           Flexible savings options for everyone
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-14">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 md:gap-20  gap-8 mt-14  mx-8 justify-items-center">
           <PlanCard
             name="Basic"
             price="N500"

@@ -6,11 +6,10 @@ export default function FeatureCard({
   icon,
   points,
   iconBg,
-  iconBorder,
   pointColor,
 }) {
   return (
-    <div className="border rounded-xl p-6 flex flex-col gap-4 text-center lg:text-left shadow-sm hover:shadow-md transition">
+    <div className="border rounded-xl p-5 sm:p-6 flex flex-col gap-4 text-center lg:text-left shadow-sm hover:shadow-md transition">
       <div
         className="w-12 h-12 rounded-lg flex items-center justify-center shadow-md"
         style={{

@@ -11,7 +11,7 @@ export default function OurFeatures() {
         <p className="text-neutral-600 mb-8 text-center">
           Powerful features to help you save and manage
         </p>
-        <div className="grid md:grid-cols-3 gap-16 px-[60px] py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 py-8 px-4 sm:px-6 md:px-0">
           <FeatureCard
             title="Flexible Savings"
             description="Create custom plans to save daily, weekly or monthly."

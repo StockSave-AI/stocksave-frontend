@@ -8,11 +8,10 @@ function VerifyPhone() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Get phone number from state passed via navigation
-  const phoneNumber = location.state?.phone || "+234XXXXXXXX"; // fallback
+  const phoneNumber = location.state?.phone || "+234XXXXXXXX";
 
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]); // 6-digit OTP
-  const [seconds, setSeconds] = useState(60); // resend timer
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [seconds, setSeconds] = useState(60);
 
   useEffect(() => {
     if (seconds > 0) {
@@ -38,7 +37,7 @@ function VerifyPhone() {
     e.preventDefault();
     const otpValue = otp.join("");
     console.log("Entered OTP:", otpValue);
-    // Add API call to verify OTP here
+
     navigate("/reset-password");
   };
 

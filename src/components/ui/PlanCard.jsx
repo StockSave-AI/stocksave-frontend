@@ -1,4 +1,5 @@
 import { FiCheckCircle } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 
 export default function PlanCard({
   name,
@@ -10,10 +11,11 @@ export default function PlanCard({
   selected,
   extraDescription,
 }) {
+  const navigate = useNavigate();
   return (
     <div
-      className={`relative border rounded-lg flex flex-col gap-4 shadow-md hover:shadow-xl hover:border-primary-800 transition-all
-                  ${selected ? "scale-105 z-10" : ""} w-64 p-6 bg-white`}
+      className={`relative border rounded-lg flex flex-col gap-4 shadow-md hover:shadow-xl hover:border-primary-500 transition-all
+  ${selected ? "scale-105 z-10" : ""} w-full max-w-sm p-6 bg-white`}
     >
       {popular && (
         <span className="absolute top-3 right-4 text-xs font-semibold text-white bg-green-600 px-4 py-1 rounded-full">
@@ -44,6 +46,7 @@ export default function PlanCard({
             ? "bg-primary-500 text-white hover:bg-green-600"
             : "bg-white text-gray-800 border border-gray-400 hover:bg-gray-50"
         }`}
+        onClick={() => navigate("/login")}
       >
         Choose Plan
       </button>
