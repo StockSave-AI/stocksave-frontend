@@ -1,35 +1,32 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 import ActionButton from "../ui/ActionButton";
 import BottomLink from "../ui/BottomLink";
 import PasswordInput from "../ui/PasswordInput";
 import RoleSelector from "../ui/RoleSelector";
 import SignupHeader from "../ui/SignupHeader";
-import { useNavigate } from "react-router-dom";
+
+import { signup as signupAPI } from "../services/auth";
 
 function Signup() {
   const navigate = useNavigate();
   const [role, setRole] = useState("customer");
+  const [loading, setLoading] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm();
-
+  const { register, handleSubmit, watch } = useForm();
   const password = watch("password");
   const confirmPassword = watch("confirmPassword");
 
-  const onSubmit = (data) => {
-    if (data.password.length < 8) {
-      toast.error("Password must be at least 8 characters");
+  const onSubmit = async (data) => {
+    if (password.length < 10) {
+      toast.error("Password must be at least 10 characters");
       return;
     }
 
-    if (data.password !== data.confirmPassword) {
+    if (password !== confirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
@@ -39,15 +36,16 @@ function Signup() {
       return;
     }
 
-    toast.success("Account created successfully");
-    setTimeout(() => {
+    setLoading(true);
+    try {
+      await signupAPI({ ...data, role });
+      toast.success("Account created successfully");
       navigate("/login");
-    }, 1500);
-    console.log({ ...data, role });
-
-    //    await axios.post("/signup", data);
-    // toast.success("Account created successfully");
-    // navigate("/login");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -85,6 +83,18 @@ function Signup() {
 
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">
+                Email Address
+              </label>
+              <input
+                type="email"
+                {...register("email", { required: true })}
+                placeholder="john@example.com"
+                className="w-full bg-neutral-100 border border-neutral-300 rounded-button p-3 outline-none focus:border-primary-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
                 Phone Number
               </label>
               <input
@@ -99,8 +109,8 @@ function Signup() {
               register={register}
               name="password"
               placeholder="Enter password"
-              error={password && password.length < 8}
-              hint="Password must be at least 8 characters"
+              error={password && password.length < 10}
+              hint="Password must be at least 10 characters"
             />
 
             <PasswordInput
@@ -125,7 +135,20 @@ function Signup() {
                 </span>
               </span>
             </div>
-            <ActionButton text="Create Account" />
+
+            {}
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-3 rounded-button text-white mt-8 transition ${
+                loading
+                  ? "bg-primary-300 cursor-not-allowed"
+                  : "bg-primary-500 hover:bg-primary-600"
+              }`}
+            >
+              {loading ? "Creating Account..." : "Create Account"}
+            </button>
+
             <BottomLink
               text="Login"
               onClick={() => navigate("/login")}

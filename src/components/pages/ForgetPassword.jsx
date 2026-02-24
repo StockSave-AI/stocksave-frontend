@@ -13,7 +13,6 @@ function ForgetPassword() {
     console.log("Phone number submitted:", data.phone);
     toast.success("OTP sent to your phone!");
 
-    // Go to Verify Phone page with the phone number
     navigate("/verify-phone", { state: { phone: data.phone } });
   };
 

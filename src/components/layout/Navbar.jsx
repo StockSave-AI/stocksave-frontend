@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
 import { IoCloseSharp, IoMenuSharp } from "react-icons/io5";
+import Logo from "./Logo";
 
 export default function Navbar() {
   const [navOpen, setNavOpen] = useState(false);
@@ -16,12 +17,10 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="bg-white border-b border-neutral-200 relative z-50">
+      <nav className="bg-neutral-100 border-b border-neutral-200 sticky top-0 z-50 w-full">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center xl:px-10">
           <div className="flex items-center gap-2 font-semibold text-lg">
-            <div className="bg-primary-500 text-white w-8 h-8 rounded-lg flex items-center justify-center">
-              S
-            </div>
+            <Logo />
             Stock Save AI
           </div>
 

@@ -1,15 +1,32 @@
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import { useState, Suspense } from "react";
+import { Outlet } from "react-router-dom";
+import Loader from "../ui/Loader";
 
-function DashboardLayout({ children }) {
+function DashboardLayout() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+
   return (
-    <div className="min-h-screen bg-neutral-50 flex">
-      <Sidebar />
+    <div className="h-screen bg-neutral-100 overflow-hidden">
+      <Topbar toggleSidebar={toggleSidebar} />
 
-      <div className="flex-1 flex flex-col">
-        <Topbar />
+      <div className="flex pt-20 h-full">
+        <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
-        <main className="p-4 md:p-6 lg:p-8">{children}</main>
+        <main
+          className={`
+    flex-1 overflow-y-auto p-4 sm:p-6
+    w-full
+    ml-0 md:ml-56 lg:ml-64
+    transition-all duration-300
+  `}
+        >
+          <Suspense fallback={<Loader />}>
+            <Outlet />
+          </Suspense>
+        </main>
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 import { IoArrowForwardOutline } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 
 export default function CTA() {
+  const navigate = useNavigate();
   return (
     <section className="py-16">
       <div className="max-w-5xl mx-auto px-6">
@@ -13,7 +15,10 @@ export default function CTA() {
           </p>
 
           <div className="flex justify-center">
-            <button className="bg-secondary-400 text-white px-6 py-3 rounded-button flex items-center gap-2">
+            <button
+              className="bg-secondary-400 text-white px-6 py-3 rounded-button flex items-center gap-2"
+              onClick={() => navigate("/signup")}
+            >
               Create Free Account <IoArrowForwardOutline />
             </button>
           </div>
