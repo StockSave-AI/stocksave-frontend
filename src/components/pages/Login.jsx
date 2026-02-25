@@ -10,8 +10,55 @@ import RoleSelector from "../ui/RoleSelector";
 import SignupHeader from "../ui/SignupHeader";
 
 import { login as loginAPI } from "../services/auth";
-import { useAuth } from "../hooks/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { getAuthRole, setAuthRole } from "../../utils/authStorage";
+
+const normalizeRole = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized === "owner" || normalized === "admin") return "owner";
+  if (normalized === "customer") return "customer";
+  return null;
+};
+
+const decodeTokenPayload = (token) => {
+  try {
+    const payload = token?.split(".")?.[1];
+    if (!payload) return null;
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const json = atob(normalized);
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+};
+
+const resolveAccountRole = (loginResult) => {
+  const candidates = [
+    loginResult?.account_type,
+    loginResult?.accountType,
+    loginResult?.role,
+    loginResult?.user?.account_type,
+    loginResult?.user?.accountType,
+    loginResult?.user?.role,
+    loginResult?.data?.account_type,
+    loginResult?.data?.accountType,
+    loginResult?.data?.role,
+    loginResult?.data?.user?.account_type,
+    loginResult?.data?.user?.accountType,
+    loginResult?.data?.user?.role,
+  ];
+
+  for (const candidate of candidates) {
+    const normalized = normalizeRole(candidate);
+    if (normalized) return normalized;
+  }
+
+  const payload = decodeTokenPayload(loginResult?.token);
+  return normalizeRole(
+    payload?.account_type || payload?.role || payload?.user?.account_type,
+  );
+};
 
 function Login() {
   const navigate = useNavigate();
@@ -37,9 +84,20 @@ function Login() {
         role,
         remember_me: rememberMe,
       });
+      const selectedRole = normalizeRole(role);
+      const actualRole = resolveAccountRole(result);
+
+      if (selectedRole && actualRole && selectedRole !== actualRole) {
+        throw new Error(
+          `This account is registered as ${actualRole}. Sign in as ${actualRole} to access the correct dashboard, or register as ${
+            selectedRole === "owner" ? "customer" : "owner"
+          } for that dashboard.`,
+        );
+      }
+
       saveToken(result.token, rememberMe);
-      setAuthRole(role, rememberMe);
-      const resolvedRole = getAuthRole() || role;
+      setAuthRole(actualRole || selectedRole || role, rememberMe);
+      const resolvedRole = normalizeRole(getAuthRole()) || actualRole || selectedRole;
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["customer-summary"] }),
         queryClient.invalidateQueries({ queryKey: ["plans"] }),

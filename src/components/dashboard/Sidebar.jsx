@@ -71,14 +71,14 @@ function Sidebar({ isOpen, setIsOpen }) {
         </div>
 
         {}
-        <nav className="flex flex-col gap-2 px-4 mt-6 flex-1">
+        <nav className="flex flex-col gap-2 px-4 md:px-3 mt-6 md:mt-3 flex-1">
           {links.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
               end
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition ${
+                `flex items-center gap-3 px-4 md:px-3 py-3 md:py-2.5 rounded-lg text-sm font-medium transition ${
                   isActive
                     ? "bg-primary-100 text-primary-600"
                     : "text-neutral-600 hover:bg-neutral-100"
@@ -92,10 +92,10 @@ function Sidebar({ isOpen, setIsOpen }) {
         </nav>
 
         {}
-        <div className="px-4 py-4 border-t border-neutral-200">
+        <div className="px-4 md:px-3 py-4 md:py-3 border-t border-neutral-200">
           <button
             onClick={() => setShowLogout(true)}
-            className="flex items-center gap-2 w-full justify-start bg-error-100 text-error px-4 py-3 rounded-lg hover:bg-error-200 transition-colors"
+            className="flex items-center gap-2 w-full justify-start bg-error-100 text-error px-4 md:px-3 py-3 md:py-2.5 rounded-lg hover:bg-error-200 transition-colors"
           >
             <FiLogOut size={18} />
             <span className="lg:inline">Logout</span>

@@ -4,8 +4,10 @@ import { formatCurrency } from "../../../utils/currency";
 export default function CurrentPlan({ plan, metrics, onEditPlan }) {
   if (!plan) return null;
 
-  const frequency = String(metrics?.frequency || plan.frequency || "monthly").toLowerCase();
   const duration = Number(metrics?.durationUnits || plan.durationMonths || 0);
+  const durationUnit = String(
+    plan?.durationUnit || metrics?.durationUnit || metrics?.intervalLabel || "months",
+  ).toLowerCase();
   const endDate = metrics?.endDate || plan.endDate;
   const nextPayment = metrics?.nextPayment || plan.nextPayment;
   const amount = metrics?.amountPerInterval ?? plan.monthlyAmount;
@@ -18,6 +20,11 @@ export default function CurrentPlan({ plan, metrics, onEditPlan }) {
           {String(plan.status).toLowerCase() === "active" && (
             <span className="text-xs font-medium text-success bg-success/10 px-3 py-1 rounded-full">
               ACTIVE
+            </span>
+          )}
+          {String(plan.status).toLowerCase() === "closed" && (
+            <span className="text-xs font-medium text-neutral-700 bg-neutral-100 px-3 py-1 rounded-full">
+              CLOSED
             </span>
           )}
         </div>
@@ -39,13 +46,7 @@ export default function CurrentPlan({ plan, metrics, onEditPlan }) {
         />
         <Detail
           label="Duration"
-          value={`${duration} ${
-            frequency === "daily"
-              ? "days"
-              : frequency === "weekly"
-                ? "weeks"
-                : "months"
-          }`}
+          value={`${duration} ${durationUnit}`}
         />
         <Detail
           label="Start Date"

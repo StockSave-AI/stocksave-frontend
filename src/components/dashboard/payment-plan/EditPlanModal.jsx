@@ -68,6 +68,8 @@ export default function EditPlanModal({
       plan_type: planType,
       amount: Number(amount),
       target_amount: Number(targetAmount),
+      duration: Number(calculatedDuration),
+      duration_unit: getIntervalLabel(planType),
       duration_months: Number(calculatedDuration),
       start_date: startDate,
     });

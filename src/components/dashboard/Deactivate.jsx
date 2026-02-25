@@ -5,6 +5,7 @@ import { FiAlertCircle, FiKey } from "react-icons/fi";
 import { clearAuthToken } from "../../utils/authStorage";
 
 import toast from "react-hot-toast";
+import { usePlans, usePausePlan } from "../hooks/usePlans";
 
 function DeactivateAccount() {
   const navigate = useNavigate();
@@ -12,6 +13,10 @@ function DeactivateAccount() {
   const [feedback, setFeedback] = useState("");
   const [confirm, setConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pauseLoading, setPauseLoading] = useState(false);
+  const { data: plansData } = usePlans();
+  const pausePlanMutation = usePausePlan();
+  const activePlanId = plansData?.data?.current_plan?.id;
   const handleDeactivate = async () => {
     if (!reason) {
       toast.error("Please select a reason for leaving.");
@@ -33,6 +38,23 @@ function DeactivateAccount() {
       toast.error(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePausePlan = async () => {
+    if (!activePlanId) {
+      toast.error("No active plan to pause.");
+      return;
+    }
+
+    setPauseLoading(true);
+    try {
+      await pausePlanMutation.mutateAsync(activePlanId);
+      toast.success("Plan paused.");
+    } catch (error) {
+      toast.error(error.message || "Unable to pause plan.");
+    } finally {
+      setPauseLoading(false);
     }
   };
 
@@ -170,7 +192,13 @@ function DeactivateAccount() {
           account temporarily or adjust your payment plan.
         </p>
         <div className="flex gap-2">
-          <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+          <button
+            onClick={handlePausePlan}
+            disabled={pauseLoading}
+            className={`px-4 py-2 text-white rounded-lg ${
+              pauseLoading ? "bg-blue-300 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
+            }`}
+          >
             Pause Account
           </button>
           <button

@@ -1,6 +1,7 @@
 import { FiArrowLeft } from "react-icons/fi";
+import { FiLoader } from "react-icons/fi";
 
-export default function BookFoodFooterActions({ canConfirm, onConfirm }) {
+export default function BookFoodFooterActions({ canConfirm, onConfirm, isSubmitting }) {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 p-4 flex flex-col sm:flex-row gap-4 md:relative md:bg-transparent md:border-none md:p-0">
       <button
@@ -13,10 +14,11 @@ export default function BookFoodFooterActions({ canConfirm, onConfirm }) {
 
       <button
         onClick={onConfirm}
-        disabled={!canConfirm}
-        className="flex-1 sm:flex-[2] bg-primary-500 text-white py-3 rounded-xl font-semibold disabled:opacity-50 hover:bg-primary-600 transition"
+        disabled={!canConfirm || isSubmitting}
+        className="flex-1 sm:flex-[2] bg-primary-500 text-white py-3 rounded-xl font-semibold disabled:opacity-50 hover:bg-primary-600 transition flex items-center justify-center gap-2"
       >
-        Confirm Booking
+        {isSubmitting ? <FiLoader className="animate-spin" /> : null}
+        {isSubmitting ? "Processing..." : "Confirm Booking"}
       </button>
     </div>
   );

@@ -12,6 +12,9 @@ import VerifyPhone from "./components/sections/VerifyPhone";
 import Loader from "./components/ui/Loader";
 import ResetPassword from "./components/ui/ResetPassword";
 import OwnerSettings from "./components/owner/owner-setting/OwnerSetting";
+const WithdrawalManagement = lazy(
+  () => import("./components/owner/withdrawals/WithdrawalManagement"),
+);
 
 const Redeem = lazy(() => import("./components/dashboard/redeem/Redeem"));
 
@@ -49,6 +52,9 @@ const OwnerNotification = lazy(
   () => import("./components/owner/owner-notifications/OwnerNotification"),
 );
 const OwnerUsers = lazy(() => import("./components/owner/users/ViewUsers"));
+const OwnerInventory = lazy(
+  () => import("./components/owner/inventory/OwnerInventory"),
+);
 
 function App() {
   return (
@@ -150,6 +156,8 @@ function App() {
             <Route path="dashboard" element={<OwnerDashboard />} />
             <Route path="cash-deposit" element={<CashDeposit />} />
             <Route path="booking" element={<BookingsManagement />} />
+            <Route path="inventory" element={<OwnerInventory />} />
+            <Route path="withdrawals" element={<WithdrawalManagement />} />
             <Route path="users" element={<OwnerUsers />} />
             <Route path="notification" element={<OwnerNotification />} />
             <Route path="setting" element={<OwnerSettings />} />

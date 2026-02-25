@@ -1,6 +1,6 @@
 import { FiSearch } from "react-icons/fi";
 
-const tabs = ["All", "Pending", " Ready", "Completed", "Cancelled"];
+const tabs = ["All", "Pending", "Completed", "Cancelled"];
 
 const BookingFilters = ({ search, onSearchChange, status, onStatusChange }) => {
   return (

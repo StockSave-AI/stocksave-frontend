@@ -1,12 +1,13 @@
-import { FiCalendar, FiClock, FiPackage, FiCheckCircle } from "react-icons/fi";
+import { FiCalendar, FiClock, FiCheckCircle, FiXCircle } from "react-icons/fi";
 
 const BookingStats = ({ bookings = [] }) => {
   const pending = bookings.filter(
     (item) => String(item?.status || "").toLowerCase() === "pending",
   ).length;
-  const ready = bookings.filter(
-    (item) => String(item?.status || "").toLowerCase() === "ready",
-  ).length;
+  const cancelled = bookings.filter((item) => {
+    const normalized = String(item?.status || "").toLowerCase();
+    return normalized === "cancelled" || normalized === "canceled";
+  }).length;
   const completed = bookings.filter(
     (item) => String(item?.status || "").toLowerCase() === "completed",
   ).length;
@@ -25,16 +26,16 @@ const BookingStats = ({ bookings = [] }) => {
       color: "bg-warning",
     },
     {
-      label: "Ready for Pickup",
-      value: String(ready),
-      icon: FiPackage,
-      color: "bg-secondary-400",
-    },
-    {
       label: "Completed",
       value: String(completed),
       icon: FiCheckCircle,
       color: "bg-primary-500",
+    },
+    {
+      label: "Cancelled",
+      value: String(cancelled),
+      icon: FiXCircle,
+      color: "bg-error",
     },
   ];
 

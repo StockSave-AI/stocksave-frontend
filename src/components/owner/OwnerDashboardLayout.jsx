@@ -4,8 +4,10 @@ import {
   FiBell,
   FiCreditCard,
   FiHome,
+  FiLayers,
   FiLogOut,
   FiMenu,
+  FiRepeat,
   FiSettings,
   FiShoppingBag,
   FiUsers,
@@ -20,8 +22,10 @@ const links = [
   { to: "/owner/dashboard", label: "Dashboard", icon: <FiHome /> },
   { to: "/owner/cash-deposit", label: "Record Cash", icon: <FiCreditCard /> },
   { to: "/owner/booking", label: "Bookings", icon: <FiShoppingBag /> },
+  { to: "/owner/inventory", label: "Inventory", icon: <FiLayers /> },
+  { to: "/owner/withdrawals", label: "Withdrawals", icon: <FiRepeat /> },
   { to: "/owner/users", label: "View Users", icon: <FiUsers /> },
-  { to: "/owner/notification", label: "Send Notification", icon: <FiBell /> },
+  { to: "/owner/notification", label: "Notifications", icon: <FiBell /> },
   { to: "/owner/setting", label: "Settings", icon: <FiSettings /> },
 ];
 
@@ -59,14 +63,14 @@ export default function OwnerDashboardLayout() {
               </button>
             </div>
 
-            <nav className="flex flex-col gap-2 px-4 mt-6">
+            <nav className="flex flex-col gap-2 px-4 md:px-3 mt-6 md:mt-3">
               {links.map((link) => (
                 <NavLink
                   key={link.to}
                   to={link.to}
                   end
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition ${
+                    `flex items-center gap-3 px-4 md:px-3 py-3 md:py-2.5 rounded-lg text-sm font-medium transition ${
                       isActive
                         ? "bg-primary-100 text-primary-600"
                         : "text-neutral-600 hover:bg-neutral-100"
@@ -82,7 +86,7 @@ export default function OwnerDashboardLayout() {
 
           <button
             onClick={() => setLogoutOpen(true)}
-            className="flex items-center gap-3 px-4 py-3 m-4 rounded-lg text-sm font-medium text-red-600 border-t border-neutral-400 hover:bg-red-100 transition"
+            className="flex items-center gap-3 px-4 md:px-3 py-3 md:py-2.5 m-4 md:m-3 rounded-lg text-sm font-medium text-red-600 border-t border-neutral-400 hover:bg-red-100 transition"
           >
             <FiLogOut />
             Log Out

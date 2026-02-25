@@ -1,6 +1,6 @@
 import { FaUser } from "react-icons/fa";
 import SectionCard from "./SectionCard";
-import { useLang } from "./LanguageProvider";
+import { useLang } from "./languageContext";
 
 export default function AccountSettingsSection() {
   const { lang, setLang, t } = useLang();

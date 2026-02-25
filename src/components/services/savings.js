@@ -20,9 +20,17 @@ export const verifySavings = async (reference) => {
 };
 
 export const submitWithdrawal = async (payload = {}) => {
+  const body = {
+    amount: payload?.amount,
+    method: payload?.method,
+    account_name: payload?.account_name,
+    account_number: payload?.account_number,
+    bank_code: payload?.bank_code,
+  };
+
   return apiClient("/api/savings/withdraw", {
     method: "POST",
-    body: payload,
+    body,
   });
 };
 
@@ -32,6 +40,10 @@ export const getSavingsRedeem = async () => {
 
 export const getSavingsBanks = async () => {
   return apiClient("/api/savings/banks");
+};
+
+export const getSavingsBalance = async () => {
+  return apiClient("/api/savings/balance");
 };
 
 export const updateSavingsStatus = async (payload = {}) => {
@@ -85,22 +97,21 @@ export const approveCashDeposit = async (payload = {}) => {
     payload?.id ??
     payload?.transaction_id ??
     null;
-  const approvalCode = payload?.approval_code ?? payload?.approvalCode ?? null;
+  const status = payload?.status ?? payload?.nextStatus ?? "Completed";
 
   if (
     transactionId === null ||
     transactionId === undefined ||
-    transactionId === "" ||
-    !approvalCode
+    transactionId === ""
   ) {
-    throw new Error("transactionId and approval_code are required for approve-cash.");
+    throw new Error("transactionId is required for update-status.");
   }
 
-  return apiClient("/api/savings/approve-cash", {
-    method: "POST",
+  return apiClient("/api/savings/update-status", {
+    method: "PATCH",
     body: {
       transactionId,
-      approval_code: String(approvalCode),
+      status,
     },
   });
 };

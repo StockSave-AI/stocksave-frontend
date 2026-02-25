@@ -49,6 +49,19 @@ export default function DashboardStatsGrid({
     getLiveStockCount(stockBoardQuery.data) ||
     Number(summary?.summary_cards?.stock_count || 0);
 
+  const planStatus = String(currentPlan?.status || "").toLowerCase();
+  const hasActivePlan = planStatus === "active";
+  const nextPaymentValue = hasActivePlan
+    ? currentPlan?.next_payment_date ||
+      currentPlan?.next_payment ||
+      summary?.summary_cards?.next_payment
+    : null;
+  const nextPaymentDisplay = hasActivePlan
+    ? formatDisplayDate(nextPaymentValue, "N/A")
+    : planStatus === "paused"
+      ? "Plan Paused"
+      : "No Active Plan";
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <StatsCard
@@ -75,8 +88,8 @@ export default function DashboardStatsGrid({
 
       <StatsCard
         title="Next Payment"
-        value={formatDisplayDate(summary?.summary_cards?.next_payment, "N/A")}
-        subtitle="Upcoming contribution"
+        value={nextPaymentDisplay}
+        subtitle={hasActivePlan ? "Upcoming contribution" : "Create or resume a plan"}
         icon={<FiCalendar />}
       />
 

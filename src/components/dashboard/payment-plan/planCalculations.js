@@ -17,6 +17,14 @@ export const getIntervalLabel = (frequency) => {
   return "months";
 };
 
+export const normalizeDurationUnit = (value, frequency = "monthly") => {
+  const raw = String(value || "").toLowerCase();
+  if (raw.startsWith("day")) return "days";
+  if (raw.startsWith("week")) return "weeks";
+  if (raw.startsWith("month")) return "months";
+  return getIntervalLabel(frequency);
+};
+
 export const getAnnualIntervals = (frequency) => {
   const normalized = normalizeFrequency(frequency);
   if (normalized === "daily") return 365;
@@ -48,6 +56,52 @@ export const addIntervals = ({ startDate, frequency, count }) => {
   }
 
   return date.toISOString();
+};
+
+const advanceDateByFrequency = (source, frequency, step = 1) => {
+  const target = new Date(source);
+  const normalized = normalizeFrequency(frequency);
+
+  if (normalized === "daily") {
+    target.setDate(target.getDate() + step);
+  } else if (normalized === "weekly") {
+    target.setDate(target.getDate() + step * 7);
+  } else {
+    target.setMonth(target.getMonth() + step);
+  }
+
+  return target;
+};
+
+export const buildUpcomingPaymentDates = ({
+  startDate,
+  frequency,
+  nextPayment,
+  endDate,
+  remainingIntervals,
+  limit = 12,
+}) => {
+  const baseIso = nextPayment || startDate;
+  if (!baseIso) return [];
+
+  const cursor = new Date(baseIso);
+  if (Number.isNaN(cursor.getTime())) return [];
+
+  const finalEndDate = endDate ? new Date(endDate) : null;
+  const iterations =
+    Number.isFinite(remainingIntervals) && remainingIntervals > 0
+      ? remainingIntervals
+      : limit;
+
+  const dates = [];
+  let current = cursor;
+  for (let i = 0; i < iterations; i += 1) {
+    if (finalEndDate && current > finalEndDate) break;
+    dates.push(current.toISOString());
+    current = advanceDateByFrequency(current, frequency, 1);
+  }
+
+  return dates;
 };
 
 const isCompletedDeposit = (item) => {
@@ -91,37 +145,87 @@ export const calculatePlanMetrics = ({
   progressStats = {},
   recentActivity = [],
   summaryProgress = {},
+  paymentHistory = [],
 }) => {
   const frequency = normalizeFrequency(
     plan?.plan_type || plan?.frequency || progressStats?.frequency,
   );
   const amountPerInterval = toNumber(plan?.amount || plan?.monthlyAmount);
   const targetAmount = toNumber(plan?.target_amount || plan?.totalTarget);
-  const derivedDuration = calculateDurationUnits({
+  const derivedDurationUnits = calculateDurationUnits({
     targetAmount,
     amountPerInterval,
   });
-  const totalSaved = toNumber(progressStats?.total_saved || plan?.totalSaved);
+  const backendDuration = toNumber(plan?.duration || plan?.durationMonths, 0);
+  const durationUnits = backendDuration > 0 ? backendDuration : derivedDurationUnits;
+  const durationUnit = normalizeDurationUnit(plan?.duration_unit, frequency);
+  const dailyExpected =
+    durationUnit === "days" && durationUnits > 0
+      ? targetAmount / durationUnits
+      : null;
+
+  const completedFromHistory = paymentHistory.reduce((total, item) => {
+    const status = String(item?.status || "").toLowerCase();
+    if (status !== "completed") return total;
+    const type = String(item?.type || item?.method || item?.transaction_type || "").toLowerCase();
+    const amount = toNumber(item?.amount);
+    if (type.includes("withdraw")) return total - amount;
+    return total + amount;
+  }, 0);
+
+  const completedFromRecentActivity = recentActivity.reduce((total, item) => {
+    const status = String(item?.status || "").toLowerCase();
+    if (status !== "completed") return total;
+    const type = String(item?.type || item?.method || item?.transaction_type || "").toLowerCase();
+    const amount = toNumber(item?.amount);
+    if (type.includes("withdraw")) return total - amount;
+    if (type.includes("deposit")) return total + amount;
+    return total;
+  }, 0);
+
+  const totalSaved = Math.max(0, (() => {
+    if (paymentHistory.length > 0) return completedFromHistory;
+    if (recentActivity.length > 0) return completedFromRecentActivity;
+    return toNumber(progressStats?.total_saved || plan?.totalSaved);
+  })());
   const paymentsMade = amountPerInterval > 0 ? Math.floor(totalSaved / amountPerInterval) : 0;
-  const completedIntervals = Math.min(paymentsMade, derivedDuration || paymentsMade);
+  const dayCompleted =
+    dailyExpected && dailyExpected > 0
+      ? Math.floor(totalSaved / dailyExpected)
+      : paymentsMade;
+  const completedIntervals = Math.min(
+    durationUnit === "days" ? dayCompleted : paymentsMade,
+    durationUnits || dayCompleted,
+  );
   const paymentProgressPercent =
-    derivedDuration > 0 ? Math.min((completedIntervals / derivedDuration) * 100, 100) : 0;
+    durationUnits > 0 ? Math.min((completedIntervals / durationUnits) * 100, 100) : 0;
   const savingsProgressPercent =
     targetAmount > 0 ? Math.min((totalSaved / targetAmount) * 100, 100) : 0;
-  const remainingIntervals = Math.max(0, derivedDuration - completedIntervals);
+  const remainingIntervals = Math.max(0, durationUnits - completedIntervals);
   const startDate = plan?.start_date || plan?.startDate || "";
-  const endDate = addIntervals({
+  const computedEndDate = addIntervals({
     startDate,
     frequency,
-    count: derivedDuration,
+    count: durationUnits,
   });
-  const nextPayment = addIntervals({
+  const computedNextPayment = addIntervals({
     startDate,
     frequency,
     count: completedIntervals + 1,
   });
+  const endDate = plan?.end_date || plan?.endDate || computedEndDate;
+  const nextPayment =
+    plan?.next_payment_date || plan?.next_payment || plan?.nextPayment || computedNextPayment;
+  const upcomingDates = buildUpcomingPaymentDates({
+    startDate,
+    frequency,
+    nextPayment,
+    endDate,
+    remainingIntervals,
+    limit: durationUnits || 12,
+  });
 
-  const periodGoal = amountPerInterval;
+  const periodGoal = durationUnit === "days" && dailyExpected ? dailyExpected : amountPerInterval;
   const periodSavedFromSummary =
     frequency === "monthly"
       ? toNumber(summaryProgress?.monthly?.current)
@@ -134,8 +238,7 @@ export const calculatePlanMetrics = ({
       ? periodSavedFromSummary
       : getCompletedDepositsInPeriod({ frequency, recentActivity });
   const annualGoal = amountPerInterval * getAnnualIntervals(frequency);
-  const periodRatio = amountPerInterval > 0 ? Math.min(periodSaved / amountPerInterval, 1) : 0;
-  const annualProjectionSaved = annualGoal * periodRatio;
+  const annualProjection = annualGoal;
 
   const periodLabel =
     frequency === "daily"
@@ -148,8 +251,9 @@ export const calculatePlanMetrics = ({
     frequency,
     amountPerInterval,
     targetAmount,
-    durationUnits: derivedDuration,
-    intervalLabel: getIntervalLabel(frequency),
+    durationUnits,
+    durationUnit,
+    intervalLabel: durationUnit,
     totalSaved,
     paymentsMade,
     completedIntervals,
@@ -163,7 +267,7 @@ export const calculatePlanMetrics = ({
     periodSaved,
     periodLabel,
     annualGoal,
-    annualProjectionSaved,
+    annualProjection,
+    upcomingDates,
   };
 };
-

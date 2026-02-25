@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { FaNairaSign } from "react-icons/fa6";
 import { formatCurrency } from "../../../utils/currency";
 import { formatDisplayDate } from "../../../utils/date";
@@ -21,18 +22,64 @@ const statusStyle = (status) => {
   return "bg-neutral-100 text-neutral-600";
 };
 
+const normalizeStatus = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "complete") return "completed";
+  if (normalized === "canceled") return "cancelled";
+  return normalized || "pending";
+};
+
 const RecentDeposits = ({
   deposits = [],
   isLoading = false,
   isError = false,
   onMarkCompleted,
-  onGenerateCode,
   isUpdating = false,
-  isGeneratingCode = false,
 }) => {
+  const PAGE_SIZE = 5;
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const filteredDeposits = useMemo(() => {
+    if (statusFilter === "all") return deposits;
+    return deposits.filter(
+      (item) => normalizeStatus(item?.status) === normalizeStatus(statusFilter),
+    );
+  }, [deposits, statusFilter]);
+  const totalPages = Math.max(1, Math.ceil(filteredDeposits.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+
+  const paginatedDeposits = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredDeposits.slice(start, start + PAGE_SIZE);
+  }, [filteredDeposits, currentPage]);
+
   return (
     <section className="bg-white p-6 rounded-card shadow-card border border-neutral-200">
-      <h3 className="text-neutral-800 font-semibold mb-4">Recent Cash Deposits</h3>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h3 className="text-neutral-800 font-semibold">Recent Cash Deposits</h3>
+        <div className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 p-1">
+          {["all", "pending", "completed"].map((filter) => {
+            const active = statusFilter === filter;
+            return (
+              <button
+                key={filter}
+                type="button"
+                onClick={() => {
+                  setStatusFilter(filter);
+                  setPage(1);
+                }}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition ${
+                  active
+                    ? "bg-primary-50 text-primary-700 border border-primary-200"
+                    : "text-neutral-600 hover:bg-neutral-50"
+                }`}
+              >
+                {filter.charAt(0).toUpperCase() + filter.slice(1)}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="h-28 flex items-center justify-center">
@@ -46,15 +93,15 @@ const RecentDeposits = ({
         </div>
       ) : null}
 
-      {!isLoading && !isError && deposits.length === 0 ? (
+      {!isLoading && !isError && filteredDeposits.length === 0 ? (
         <div className="h-28 flex items-center justify-center text-sm text-neutral-500">
-          No pending cash deposits right now.
+          No deposits found for this filter.
         </div>
       ) : null}
 
-      {!isLoading && !isError && deposits.length > 0 ? (
+      {!isLoading && !isError && filteredDeposits.length > 0 ? (
         <div className="divide-y divide-neutral-100">
-          {deposits.map((item, idx) => {
+          {paginatedDeposits.map((item, idx) => {
             const status = toStatusLabel(item?.status);
             const isPending = String(item?.status || "").toLowerCase() === "pending";
 
@@ -80,15 +127,7 @@ const RecentDeposits = ({
                     {status}
                   </span>
                   {isPending ? (
-                    <div className="flex items-center justify-end gap-3">
-                      <button
-                        type="button"
-                        disabled={isGeneratingCode}
-                        onClick={() => onGenerateCode?.(item)}
-                        className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 disabled:opacity-50"
-                      >
-                        Generate Code
-                      </button>
+                    <div className="flex items-center justify-end">
                       <button
                         type="button"
                         disabled={isUpdating}
@@ -103,6 +142,32 @@ const RecentDeposits = ({
               </div>
             );
           })}
+        </div>
+      ) : null}
+
+      {!isLoading && !isError && filteredDeposits.length > PAGE_SIZE ? (
+        <div className="pt-4 flex items-center justify-between gap-3">
+          <p className="text-xs text-neutral-500">
+            Page {currentPage} of {totalPages}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 text-xs font-semibold rounded-md border border-neutral-200 text-neutral-700 disabled:opacity-50"
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 text-xs font-semibold rounded-md border border-neutral-200 text-neutral-700 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
         </div>
       ) : null}
     </section>

@@ -44,6 +44,7 @@ export const updateProfile = async (payload) => {
 };
 
 export const deleteAccount = async () => {
-  // TODO: Backend contract currently defines only signup/login/account-summary auth endpoints.
-  throw new Error("Delete account endpoint is not defined in the current API spec.");
+  return apiClient("/api/auth/delete-account", {
+    method: "DELETE",
+  });
 };

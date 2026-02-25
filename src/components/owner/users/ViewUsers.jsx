@@ -1,184 +1,67 @@
 import { useMemo, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "react-hot-toast";
 import { FiSearch } from "react-icons/fi";
-import { useOwnerUsers } from "../hooks/useOwnerUsers";
-import { updateSavingsStatus, verifySavings } from "../../services/savings";
-import { useGenerateCashCode } from "../../hooks/useSavingsMutations";
-import ApprovalCodeModal from "./ApprovalCodeModal";
-import UserDetailsModal from "./UserDetailsModal";
-import DepositsModal from "./DepositsModal";
+import { FiUsers } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import {
+  useOwnerUsers,
+  useOwnerUserDetail,
+} from "../hooks/useOwnerData";
 import UsersMobileList from "./UsersMobileList";
 import UsersDesktopTable from "./UsersDesktopTable";
-import {
-  STATUS_FILTERS,
-  asList,
-  fullName,
-  isPaystackPending,
-  isPendingDeposit,
-} from "./userHelpers";
+import UserDetailsModal from "./UserDetailsModal";
+import { STATUS_FILTERS, fullName } from "./userHelpers";
 
 export default function ViewUsers() {
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
+  const [page, setPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [selectedDetailsUser, setSelectedDetailsUser] = useState(null);
-  const [selectedDepositsUser, setSelectedDepositsUser] = useState(null);
-  const [generatedCodeData, setGeneratedCodeData] = useState(null);
-  const usersQuery = useOwnerUsers(search.trim());
-  const generateCodeMutation = useGenerateCashCode();
 
-  const invalidateAll = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["owner-users"] }),
-      queryClient.invalidateQueries({ queryKey: ["owner-stats"] }),
-      queryClient.invalidateQueries({ queryKey: ["owner-recent-cash"] }),
-      queryClient.invalidateQueries({ queryKey: ["recent-savings"] }),
-      queryClient.invalidateQueries({ queryKey: ["savings-history"] }),
-      queryClient.invalidateQueries({ queryKey: ["customer-summary"] }),
-    ]);
-  };
-
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ transactionId, nextStatus }) =>
-      updateSavingsStatus({ transactionId, status: nextStatus }),
-    onSuccess: async (_data, variables) => {
-      const targetId = Number(variables?.transactionId);
-      const nextStatus = variables?.nextStatus || "Completed";
-
-      queryClient.setQueryData(["owner-recent-cash"], (previous) => {
-        const source = previous?.data ?? previous;
-        if (!Array.isArray(source)) return previous;
-        const updated = source.map((item) =>
-          Number(item?.id) === targetId ? { ...item, status: nextStatus } : item,
-        );
-        return previous?.data ? { ...previous, data: updated } : updated;
-      });
-
-      queryClient.setQueriesData({ queryKey: ["owner-users"] }, (previous) => {
-        if (!Array.isArray(previous)) return previous;
-        return previous.map((user) => {
-          const transactions = asList(user?.transactions).map((tx) =>
-            Number(tx?.id) === targetId ? { ...tx, status: nextStatus } : tx,
-          );
-          const latestPending = transactions.find(
-            (tx) => String(tx?.status || "").toLowerCase() === "pending",
-          );
-          return { ...user, transactions, status: latestPending ? "Pending" : nextStatus };
-        });
-      });
-
-      await invalidateAll();
-      toast.success("Deposit status updated.");
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to update deposit status.");
-    },
+  const usersQuery = useOwnerUsers({
+    page,
+    limit: 20,
+    q: search.trim(),
+    status: status === "All" ? "" : status,
+    includeTransactions: true,
   });
+  const userDetailQuery = useOwnerUserDetail(selectedDetailsUser?.id, Boolean(selectedDetailsUser));
 
-  const verifyMutation = useMutation({
-    mutationFn: (reference) => verifySavings(reference),
-    onSuccess: async () => {
-      await invalidateAll();
-      toast.success("Payment verified successfully.");
-    },
-    onError: (error) => {
-      toast.error(error.message || "Verification failed.");
-    },
-  });
+  const users = useMemo(() => {
+    const payload = usersQuery.data || {};
+    const list = payload.users || payload.data || [];
+    return Array.isArray(list) ? list : [];
+  }, [usersQuery.data]);
+
+  const pagination = usersQuery.data?.pagination || {};
+  const totalPages = pagination.total_pages || 1;
+
+  const normalizedUsers = useMemo(() => {
+    return users.map((user) => {
+      const transactions = Array.isArray(user.transactions) ? user.transactions : [];
+      return {
+        ...user,
+        balance: Number(user.balance || 0),
+        created_at: user.created_at || user.createdAt,
+        transactions,
+      };
+    });
+  }, [users]);
 
   const filteredUsers = useMemo(() => {
-    const users = asList(usersQuery.data).filter((user) => {
-      const term = search.trim().toLowerCase();
-      if (!term) return true;
+    const term = search.trim().toLowerCase();
+    return normalizedUsers.filter((user) => {
       const name = fullName(user).toLowerCase();
       const phone = String(user?.phone || "").toLowerCase();
-      return name.includes(term) || phone.includes(term);
+      const email = String(user?.email || "").toLowerCase();
+      const statusMatch =
+        status === "All" ||
+        String(user?.status || "").toLowerCase() === status.toLowerCase();
+      const searchMatch = !term || name.includes(term) || phone.includes(term) || email.includes(term);
+      return statusMatch && searchMatch;
     });
-
-    if (status === "All") return users;
-    return users.filter(
-      (user) => String(user?.status || "").toLowerCase() === status.toLowerCase(),
-    );
-  }, [usersQuery.data, search, status]);
-
-  const getPendingDeposit = (user) =>
-    asList(user?.transactions).find((tx) => isPendingDeposit(tx));
-  const getPendingPaystack = (user) =>
-    asList(user?.transactions).find((tx) => isPaystackPending(tx));
-
-  const handleApprove = async (tx) => {
-    if (tx?.id === null || tx?.id === undefined || tx?.id === "") {
-      toast.error("Deposit id is missing.");
-      return;
-    }
-    await updateStatusMutation.mutateAsync({
-      transactionId: tx.id,
-      nextStatus: "Completed",
-    });
-    setOpenMenuId(null);
-  };
-
-  const handleReject = async (tx) => {
-    if (tx?.id === null || tx?.id === undefined || tx?.id === "") {
-      toast.error("Deposit id is missing.");
-      return;
-    }
-    await updateStatusMutation.mutateAsync({
-      transactionId: tx.id,
-      nextStatus: "Rejected",
-    });
-    setOpenMenuId(null);
-  };
-
-  const handleVerify = async (tx) => {
-    const reference = tx?.reference || tx?.payment_reference;
-    if (!reference) {
-      toast.error("No payment reference found for verification.");
-      return;
-    }
-    await verifyMutation.mutateAsync(reference);
-    setOpenMenuId(null);
-  };
-
-  const handleGenerateCode = async (tx) => {
-    const transactionId = tx?.id || tx?.transactionId || tx?.transaction_id;
-    if (!transactionId) {
-      toast.error("Transaction id is missing.");
-      return;
-    }
-
-    try {
-      const response = await generateCodeMutation.mutateAsync({ transactionId });
-      const code =
-        response?.approval_code ||
-        response?.data?.approval_code ||
-        response?.code ||
-        response?.data?.code;
-
-      if (!code) {
-        toast.error("Approval code was not returned by server.");
-        return;
-      }
-
-      setGeneratedCodeData({ transactionId, code });
-      toast.success("Approval code generated.");
-    } catch (error) {
-      if (
-        String(error?.message || "")
-          .toLowerCase()
-          .includes("pending cash transaction not found")
-      ) {
-        await invalidateAll();
-        toast.error("Transaction is no longer pending. Data refreshed.");
-        return;
-      }
-      toast.error(error.message || "Failed to generate approval code.");
-    } finally {
-      setOpenMenuId(null);
-    }
-  };
+  }, [normalizedUsers, search, status]);
 
   const toggleMenu = (userId) => {
     setOpenMenuId((previous) => (previous === userId ? null : userId));
@@ -189,18 +72,35 @@ export default function ViewUsers() {
     setOpenMenuId(null);
   };
 
-  const openDeposits = (user) => {
-    setSelectedDepositsUser(user);
+  const handleRecordDeposit = (user) => {
     setOpenMenuId(null);
+    navigate("/owner/cash-deposit", {
+      state: {
+        prefillUser: {
+          id: user?.id,
+          first_name: user?.first_name || "",
+          last_name: user?.last_name || "",
+          phone: user?.phone || "",
+          email: user?.email || "",
+        },
+      },
+    });
   };
 
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-card border border-neutral-100 shadow-card p-6">
-        <h2 className="text-2xl font-semibold text-neutral-800">View Users</h2>
-        <p className="text-sm text-neutral-500 mt-1">
-          Manage customer accounts and approve deposits.
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-2xl font-semibold text-neutral-800">View Users</h2>
+            <p className="text-sm text-neutral-500 mt-1">
+              Manage customer accounts and approve deposits.
+            </p>
+          </div>
+          <div className="h-10 w-10 rounded-full bg-primary-50 text-primary-700 border border-primary-100 flex items-center justify-center shrink-0">
+            <FiUsers size={18} />
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-card border border-neutral-100 shadow-card p-4 md:p-6">
@@ -252,57 +152,49 @@ export default function ViewUsers() {
               users={filteredUsers}
               openMenuId={openMenuId}
               onToggleMenu={toggleMenu}
-              getPendingDeposit={getPendingDeposit}
-              getPendingPaystack={getPendingPaystack}
               onViewDetails={openDetails}
-              onViewDeposits={openDeposits}
-              onApprove={handleApprove}
-              onReject={handleReject}
-              onVerify={handleVerify}
-              onGenerateCode={handleGenerateCode}
-              updating={updateStatusMutation.isPending}
-              verifying={verifyMutation.isPending}
-              generatingCode={generateCodeMutation.isPending}
+              onRecordDeposit={handleRecordDeposit}
+              loading={false}
             />
 
             <UsersDesktopTable
               users={filteredUsers}
               openMenuId={openMenuId}
               onToggleMenu={toggleMenu}
-              getPendingDeposit={getPendingDeposit}
-              getPendingPaystack={getPendingPaystack}
               onViewDetails={openDetails}
-              onViewDeposits={openDeposits}
-              onApprove={handleApprove}
-              onReject={handleReject}
-              onVerify={handleVerify}
-              onGenerateCode={handleGenerateCode}
-              updating={updateStatusMutation.isPending}
-              verifying={verifyMutation.isPending}
-              generatingCode={generateCodeMutation.isPending}
+              onRecordDeposit={handleRecordDeposit}
+              loading={false}
             />
+
+            <div className="flex justify-between items-center mt-4 text-sm text-neutral-600">
+              <span>
+                Page {pagination.page || 1} of {totalPages}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="px-3 py-1 rounded border border-neutral-200 disabled:opacity-50"
+                >
+                  Prev
+                </button>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  className="px-3 py-1 rounded border border-neutral-200 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
           </div>
         ) : null}
       </div>
 
       <UserDetailsModal
-        user={selectedDetailsUser}
+        user={userDetailQuery.data?.data || selectedDetailsUser}
+        loading={userDetailQuery.isLoading}
         onClose={() => setSelectedDetailsUser(null)}
-      />
-      <DepositsModal
-        user={selectedDepositsUser}
-        onClose={() => setSelectedDepositsUser(null)}
-        onApprove={handleApprove}
-        onReject={handleReject}
-        onVerify={handleVerify}
-        onGenerateCode={handleGenerateCode}
-        generatingCode={generateCodeMutation.isPending}
-        updating={updateStatusMutation.isPending}
-        verifying={verifyMutation.isPending}
-      />
-      <ApprovalCodeModal
-        data={generatedCodeData}
-        onClose={() => setGeneratedCodeData(null)}
       />
     </div>
   );

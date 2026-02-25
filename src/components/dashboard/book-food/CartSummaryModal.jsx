@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { FiX, FiPlus, FiMinus, FiTrash2, FiShoppingCart } from "react-icons/fi";
 
 const CartSummaryModal = ({
@@ -9,6 +10,8 @@ const CartSummaryModal = ({
   savingsBalance,
   showToast,
 }) => {
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+
   const increaseQty = (id, sizeLabel) => {
     setCart((prev) =>
       prev.map((item) =>
@@ -41,12 +44,19 @@ const CartSummaryModal = ({
   };
 
   const handleCheckout = async () => {
+    if (isCheckingOut) return;
+
     if (total > savingsBalance) {
       showToast.error("Insufficient funds. Please deposit more.");
       return;
     }
 
-    await onCheckout();
+    setIsCheckingOut(true);
+    try {
+      await onCheckout();
+    } finally {
+      setIsCheckingOut(false);
+    }
   };
 
   return (
@@ -133,10 +143,10 @@ const CartSummaryModal = ({
 
         <button
           onClick={handleCheckout}
-          disabled={cart.length === 0 || total > savingsBalance}
+          disabled={isCheckingOut || cart.length === 0 || total > savingsBalance}
           className="w-full mt-4 bg-primary-500 text-white py-2.5 rounded-2xl font-semibold disabled:opacity-50 hover:bg-primary-600 transition"
         >
-          Proceed to Booking
+          {isCheckingOut ? "Processing booking..." : "Proceed to Booking"}
         </button>
       </div>
     </div>

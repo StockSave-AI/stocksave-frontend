@@ -14,9 +14,9 @@ export default function PlanStateBanner({
             <FiTarget />
           </div>
           <div>
-            <h3 className="text-h3">No active payment plan</h3>
+            <h3 className="text-h3">No Active Plan</h3>
             <p className="text-sm text-neutral-500">
-              Create a plan to automate your savings and track progress.
+              Create a payment plan to automate your savings and track progress.
             </p>
           </div>
         </div>
@@ -24,7 +24,7 @@ export default function PlanStateBanner({
           onClick={onCreatePlan}
           className="bg-primary-500 text-white px-4 py-2 rounded-button hover:bg-primary-600 transition"
         >
-          Set Payment Plan
+          Create Payment Plan
         </button>
       </div>
     );
