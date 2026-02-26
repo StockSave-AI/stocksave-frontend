@@ -91,6 +91,9 @@ export const useOwnerNotificationsPage = ({ isOwner, navigate, pageSize = 8 }) =
   }, [fullItems, fullyBookedQuery.isSuccess, lowItems, lowStockQuery.isSuccess]);
 
   const recKey = `reconciliation:${new Date().toISOString().slice(0, 10)}`;
+  const isReconciliationKey = (key) => String(key || "").startsWith("reconciliation:");
+  const isVisibleByDismiss = (item) =>
+    isReconciliationKey(item?.readKey) || !dismissedMap[item?.readKey];
   const itemsByTab = {
     "pending-payments": pendingItems.map((item) => ({
       id: `pending-${item.transaction_id}`,
@@ -163,7 +166,7 @@ export const useOwnerNotificationsPage = ({ isOwner, navigate, pageSize = 8 }) =
   };
 
   const allItems = Object.values(itemsByTab).flat();
-  const visibleAllItems = allItems.filter((item) => !dismissedMap[item.readKey]);
+  const visibleAllItems = allItems.filter(isVisibleByDismiss);
   const loadedUnread = visibleAllItems.filter((item) => !readMap[item.readKey]).length;
   const fallbackUnread = Math.max(0, Number(summary?.total_alerts || 0) - getOwnerReadKeysCount());
   const unread = Math.max(loadedUnread, fallbackUnread);
@@ -176,7 +179,7 @@ export const useOwnerNotificationsPage = ({ isOwner, navigate, pageSize = 8 }) =
     reconciliation: reconciliationQuery.isSuccess ? 1 : 0,
   };
 
-  const currentItems = (itemsByTab[activeTab] || []).filter((item) => !dismissedMap[item.readKey]);
+  const currentItems = (itemsByTab[activeTab] || []).filter(isVisibleByDismiss);
   const orderedItems = [...currentItems].sort((a, b) => {
     const aRead = Boolean(readMap[a.readKey]);
     const bRead = Boolean(readMap[b.readKey]);
@@ -209,6 +212,7 @@ export const useOwnerNotificationsPage = ({ isOwner, navigate, pageSize = 8 }) =
   const clearAllNotifications = () => {
     const next = { ...dismissedMap };
     visibleAllItems.forEach((item) => {
+      if (isReconciliationKey(item?.readKey)) return;
       if (item?.readKey) next[item.readKey] = true;
     });
     setDismissedMap(next);
@@ -219,6 +223,7 @@ export const useOwnerNotificationsPage = ({ isOwner, navigate, pageSize = 8 }) =
   const clearCurrentHistory = () => {
     const next = { ...dismissedMap };
     orderedItems.forEach((item) => {
+      if (isReconciliationKey(item?.readKey)) return;
       if (item?.readKey) next[item.readKey] = true;
     });
     setDismissedMap(next);

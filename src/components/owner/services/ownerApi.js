@@ -76,9 +76,3 @@ export const fetchOwnerWithdrawals = ({ status = "Processing", limit } = {}) => 
   const query = params.toString();
   return apiClient(`${OWNER_BASE}/withdrawals${query ? `?${query}` : ""}`);
 };
-
-export const completeOwnerWithdrawal = ({ transactionId }) =>
-  apiClient(`${OWNER_BASE}/complete-withdrawal`, {
-    method: "PATCH",
-    body: { transactionId },
-  });

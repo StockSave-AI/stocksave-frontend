@@ -1,39 +1,77 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  getCustomerUnreadNotificationCount,
-  getNotifications,
-  markAllNotificationsRead,
-} from "../services/notificationsService";
+  deleteCustomerNotification,
+  fetchCustomerNotifications,
+  fetchCustomerStockAlerts,
+  markAllCustomerNotificationsRead,
+  markCustomerNotificationRead,
+} from "../services/customerNotificationsApi";
 
-const CUSTOMER_NOTIFICATIONS_QUERY_KEY = ["customer-notifications"];
-
-export function useNotifications() {
-  const queryClient = useQueryClient();
-  const notificationsQuery = useQuery({
-    queryKey: CUSTOMER_NOTIFICATIONS_QUERY_KEY,
-    queryFn: getNotifications,
+export const useCustomerNotifications = (params = {}) =>
+  useQuery({
+    queryKey: ["customer-notifications", params],
+    queryFn: () => fetchCustomerNotifications(params),
     staleTime: 30 * 1000,
   });
 
-  const markAllRead = async () => {
-    const updated = await markAllNotificationsRead();
-    queryClient.setQueryData(CUSTOMER_NOTIFICATIONS_QUERY_KEY, updated);
-    return updated;
-  };
+export const useCustomerStockAlerts = (params = {}) =>
+  useQuery({
+    queryKey: ["customer-notifications-stock-alerts", params],
+    queryFn: () => fetchCustomerStockAlerts(params),
+    staleTime: 30 * 1000,
+  });
 
-  return {
-    notifications: notificationsQuery.data || [],
-    loadMore: notificationsQuery.refetch,
-    markAllRead,
-    isLoading: notificationsQuery.isLoading,
-    isError: notificationsQuery.isError,
-  };
-}
+export const useMarkAllCustomerNotificationsRead = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: markAllCustomerNotificationsRead,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["customer-notifications"] }),
+        queryClient.invalidateQueries({ queryKey: ["customer-notifications-unread"] }),
+      ]);
+    },
+  });
+};
+
+export const useMarkCustomerNotificationRead = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: markCustomerNotificationRead,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["customer-notifications"] }),
+        queryClient.invalidateQueries({ queryKey: ["customer-notifications-unread"] }),
+      ]);
+    },
+  });
+};
+
+export const useDeleteCustomerNotification = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteCustomerNotification,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["customer-notifications"] }),
+        queryClient.invalidateQueries({ queryKey: ["customer-notifications-unread"] }),
+      ]);
+    },
+  });
+};
 
 export function useCustomerUnreadNotifications(enabled = true) {
   return useQuery({
     queryKey: ["customer-notifications-unread"],
-    queryFn: getCustomerUnreadNotificationCount,
+    queryFn: async () => {
+      const payload = await fetchCustomerNotifications({
+        unread: true,
+        page: 1,
+        limit: 1,
+      });
+      const stats = payload?.stats || payload?.data?.stats || {};
+      return Number(stats?.unread || 0);
+    },
     enabled,
     staleTime: 30 * 1000,
   });

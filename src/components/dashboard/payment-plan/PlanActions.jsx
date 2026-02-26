@@ -83,6 +83,7 @@ export default function PlanActions({
             const didSave = await onSubmitPlan({ mode, payload });
             if (didSave) {
               setShowEditModal(false);
+              setDismissedTick(openModalTick);
             }
           }}
         />
