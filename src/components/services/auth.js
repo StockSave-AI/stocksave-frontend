@@ -32,12 +32,11 @@ export const signup = async (data) => {
 };
 
 export const getProfile = async () => {
-  const result = await apiClient("/api/auth/account-summary");
-  return result?.data;
+  return apiClient("/api/settings/profile");
 };
 
 export const updateProfile = async (payload) => {
-  return apiClient("/api/auth/account-summary", {
+  return apiClient("/api/settings/profile", {
     method: "PATCH",
     body: payload,
   });
@@ -50,13 +49,20 @@ export const deleteAccount = async () => {
 };
 
 export const updateOwnerSettings = async (payload) => {
+  if (typeof FormData !== "undefined" && payload instanceof FormData) {
+    return apiClient("/api/settings/profile", {
+      method: "PATCH",
+      body: payload,
+    });
+  }
+
   const body = Object.entries(payload || {}).reduce((acc, [key, value]) => {
     acc[key] = value === undefined ? null : value;
     return acc;
   }, {});
 
-  return apiClient("/api/auth/update-settings", {
-    method: "PUT",
+  return apiClient("/api/settings/profile", {
+    method: "PATCH",
     body,
   });
 };
@@ -67,6 +73,7 @@ export const changePassword = async (payload) => {
     body: {
       current_password: payload?.current_password ?? "",
       new_password: payload?.new_password ?? "",
+      confirm_password: payload?.confirm_password ?? "",
     },
   });
 };

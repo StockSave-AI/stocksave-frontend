@@ -20,7 +20,6 @@ import { useCustomerSummary } from "../../hooks/useCustomerSummary";
 import useSavingsBalance from "../../hooks/useSavingsBalance";
 import { canAfford, normalizeFoodItems } from "./bookFoodUtils";
 import { pushCustomerBookingNotification } from "../../services/notificationsService";
-import { useCustomerStockAlerts } from "../../hooks/useNotifications";
 
 const BookFood = () => {
   const navigate = useNavigate();
@@ -38,14 +37,6 @@ const BookFood = () => {
   const bookInventoryMutation = useBookInventory();
   const summaryQuery = useCustomerSummary();
   const savingsBalanceQuery = useSavingsBalance();
-  const stockAlertsQuery = useCustomerStockAlerts({ days: 30, limit: 20 });
-
-  const stockAlerts = useMemo(() => {
-    const payload = stockAlertsQuery?.data;
-    if (Array.isArray(payload?.data)) return payload.data;
-    if (Array.isArray(payload)) return payload;
-    return [];
-  }, [stockAlertsQuery.data]);
 
   const inventoryLookup = useMemo(() => {
     const raw = inventoryListQuery.data?.data || inventoryListQuery.data || [];
@@ -269,48 +260,7 @@ const BookFood = () => {
           }
           toast.error(insufficientBalanceMessage);
         }}
-        stockAlerts={stockAlerts}
       />
-
-      {stockAlerts.length > 0 ? (
-        <div className="bg-white p-6 rounded-xl border border-amber-200 shadow-sm">
-          <div className="flex items-center justify-between gap-2 mb-4">
-            <h3 className="text-amber-700 font-semibold text-sm uppercase">Stock Alerts</h3>
-            <button
-              type="button"
-              onClick={() => stockAlertsQuery.refetch()}
-              className="px-3 py-1.5 rounded-lg text-xs border border-amber-200 text-amber-800 hover:bg-amber-50"
-            >
-              Refresh
-            </button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {stockAlerts.map((alert, index) => (
-              <div
-                key={`${alert?.product_name || "item"}-${alert?.size_label || "size"}-${index}`}
-                className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3"
-              >
-                <p className="text-sm font-semibold text-amber-900">
-                  {alert?.product_name || "Product"} {alert?.size_label ? `(${alert.size_label})` : ""}
-                </p>
-                <p className="text-xs text-amber-800 mt-1">
-                  Slots remaining: {Number(alert?.slots_remaining ?? 0)}
-                </p>
-                <p className="text-xs text-amber-700 mt-1">
-                  Quantity left: {Number(alert?.quantity_remaining ?? 0)}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-      {stockAlertsQuery.isError ? (
-        <div className="bg-white p-4 rounded-xl border border-red-200 shadow-sm">
-          <p className="text-sm text-red-600">
-            Stock alerts are temporarily unavailable.
-          </p>
-        </div>
-      ) : null}
 
       {showCart && (
         <CartSummaryModal

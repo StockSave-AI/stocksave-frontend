@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { FiImage } from "react-icons/fi";
 import { canAfford, isBookableSize } from "./bookFoodUtils";
 
@@ -7,28 +7,9 @@ const FoodItemCard = ({
   onAddToCart,
   userBalance,
   onLockedAction,
-  stockAlerts = [],
 }) => {
   const [qty, setQty] = useState(1);
   const [selectedSize, setSelectedSize] = useState(item.sizes[0]);
-
-  const matchingStockAlert = useMemo(() => {
-    const itemName = String(item?.name || "").trim().toLowerCase();
-    const selectedLabel = String(selectedSize?.label || "")
-      .trim()
-      .toLowerCase();
-    return (
-      stockAlerts.find((alert) => {
-        const alertName = String(alert?.product_name || "")
-          .trim()
-          .toLowerCase();
-        const alertLabel = String(alert?.size_label || "")
-          .trim()
-          .toLowerCase();
-        return alertName === itemName && alertLabel === selectedLabel;
-      }) || null
-    );
-  }, [item?.name, selectedSize?.label, stockAlerts]);
 
   const handleQtyChange = (value) => {
     const number = parseInt(value);
@@ -71,16 +52,6 @@ const FoodItemCard = ({
 
       <div className="p-5 flex flex-col gap-4 relative z-10">
         <h4 className="text-lg font-semibold text-neutral-800">{item.name}</h4>
-
-        {matchingStockAlert ? (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
-            <p className="text-xs font-semibold text-amber-800">Stock Alert</p>
-            <p className="text-xs text-amber-700">
-              Only {Number(matchingStockAlert?.slots_remaining ?? 0)} slot(s) currently available
-              for this size.
-            </p>
-          </div>
-        ) : null}
 
         <div className="flex flex-col gap-2">
           <select

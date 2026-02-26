@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { FiShoppingCart, FiBox, FiSearch } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { StockCard } from "./StockCard";
-import { StockAlerts } from "./StockAlerts";
 import { RecentUpdates } from "./RecentUpdates";
 import { StockCategory } from "./StockCategory";
 import StockSearch from "./StockSearch";
@@ -204,7 +203,7 @@ const StockBoard = () => {
       desc: update?.desc || update?.message || "",
       time: update?.time || "",
     }));
-    return [...notificationStockUpdates, ...existingNormalized];
+    return [...notificationStockUpdates, ...existingNormalized].slice(0, 5);
   }, [notificationStockUpdates, stockData.updates]);
 
   const filteredItems = useMemo(() => {
@@ -293,8 +292,6 @@ const StockBoard = () => {
           </div>
         ) : null}
       </div>
-
-      <StockAlerts alerts={stockData.alerts} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <StockCategory categories={stockData.categories} />

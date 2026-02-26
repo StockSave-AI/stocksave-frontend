@@ -9,6 +9,7 @@ const AddBankAccount = ({
   bankOptions = [],
   initialData = null,
 }) => {
+  const isEditing = Boolean(initialData);
   const persistedDraft = JSON.parse(
     localStorage.getItem(REDEEM_ACCOUNT_DRAFT_KEY) || "{}",
   );
@@ -108,7 +109,7 @@ const AddBankAccount = ({
   return (
     <div className="bg-white p-6 rounded-card shadow-card border border-neutral-200 space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-h3">Add Bank Account</h3>
+        <h3 className="text-h3">{isEditing ? "Edit Bank Account" : "Add Bank Account"}</h3>
         <button onClick={onClose}>
           <FiX className="text-neutral-500" size={20} />
         </button>
@@ -204,7 +205,7 @@ const AddBankAccount = ({
             type="submit"
             className="flex-1 bg-primary-500 text-white py-3 rounded-button font-semibold hover:bg-primary-600 transition"
           >
-            Save Account
+            {isEditing ? "Update Account" : "Save Account"}
           </button>
         </div>
       </form>

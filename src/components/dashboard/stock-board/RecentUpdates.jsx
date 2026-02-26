@@ -1,6 +1,10 @@
 import { FiBox } from "react-icons/fi";
 
-export const RecentUpdates = ({ updates = [], isLoading = false, isError = false }) => {
+export const RecentUpdates = ({
+  updates = [],
+  isLoading = false,
+  isError = false,
+}) => {
   return (
     <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm">
       <div className="flex items-center justify-between mb-4">
@@ -14,9 +18,7 @@ export const RecentUpdates = ({ updates = [], isLoading = false, isError = false
       <p className="text-xs text-neutral-500 mb-4">
         Fresh inventory updates from recent stock activity.
       </p>
-      <h3 className="sr-only">
-        Recent Stock Updates
-      </h3>
+      <h3 className="sr-only">Recent Stock Updates</h3>
       {isLoading ? (
         <div className="h-36 flex items-center justify-center">
           <div className="h-8 w-8 rounded-full border-2 border-neutral-200 border-t-primary-500 animate-spin" />
@@ -47,12 +49,18 @@ export const RecentUpdates = ({ updates = [], isLoading = false, isError = false
                   <FiBox className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-neutral-800">{update.title}</p>
-                  <p className="text-xs text-neutral-600 break-words">{update.desc}</p>
+                  <p className="text-sm font-bold text-neutral-800">
+                    {update.title}
+                  </p>
+                  <p className="text-xs text-neutral-600 break-words">
+                    {update.desc}
+                  </p>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1 shrink-0">
-                <span className="text-[10px] text-neutral-500">{update.time}</span>
+                <span className="text-[10px] text-neutral-500">
+                  {update.time}
+                </span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-white border border-amber-200 text-amber-700 font-medium">
                   Stock Alert
                 </span>

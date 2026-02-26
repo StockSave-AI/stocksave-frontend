@@ -52,6 +52,9 @@ const OwnerDashboard = lazy(() => import("./components/owner/OwnerDashboard"));
 const OwnerNotification = lazy(
   () => import("./components/owner/owner-notifications/OwnerNotification"),
 );
+const OwnerAnalytics = lazy(
+  () => import("./components/owner/analytics/OwnerAnalytics"),
+);
 const OwnerUsers = lazy(() => import("./components/owner/users/ViewUsers"));
 const OwnerInventory = lazy(
   () => import("./components/owner/inventory/OwnerInventory"),
@@ -166,6 +169,7 @@ function App() {
             <Route path="dashboard" element={<OwnerDashboard />} />
             <Route path="cash-deposit" element={<CashDeposit />} />
             <Route path="booking" element={<BookingsManagement />} />
+            <Route path="analytics" element={<OwnerAnalytics />} />
             <Route path="inventory" element={<OwnerInventory />} />
             <Route path="withdrawals" element={<WithdrawalManagement />} />
             <Route path="users" element={<OwnerUsers />} />

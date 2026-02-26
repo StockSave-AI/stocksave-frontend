@@ -3,6 +3,9 @@ import { FiX, FiLogOut } from "react-icons/fi";
 import { getProfile } from "../services/auth";
 import { formatName } from "./formatName";
 
+const readUser = (payload) =>
+  payload?.data || payload?.profile || payload?.user || payload || null;
+
 function Logout({ isOpen, onClose, onConfirm }) {
   const [user, setUser] = useState(null);
 
@@ -13,7 +16,7 @@ function Logout({ isOpen, onClose, onConfirm }) {
     getProfile()
       .then((data) => {
         if (!isMounted) return;
-        setUser(data);
+        setUser(readUser(data));
       })
       .catch((err) => {
         console.error(err);

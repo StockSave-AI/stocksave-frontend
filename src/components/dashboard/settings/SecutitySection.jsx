@@ -48,6 +48,7 @@ export default function SecuritySection() {
       await changePasswordMutation.mutateAsync({
         current_password: form.current_password,
         new_password: form.new_password,
+        confirm_password: form.confirm_password,
       });
       toast.success("Password changed successfully.");
       resetForm();

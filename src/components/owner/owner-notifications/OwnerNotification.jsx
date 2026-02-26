@@ -8,6 +8,7 @@ import {
   FiEye,
   FiLayers,
   FiShoppingCart,
+  FiTrash2,
   FiUserPlus,
 } from "react-icons/fi";
 import { toast } from "react-hot-toast";
@@ -25,6 +26,7 @@ import { useOwnerNotificationsPage } from "./useOwnerNotificationsPage";
 const PAGE_SIZE = 8;
 
 const iconMap = {
+  feed: FiBell,
   "pending-payments": FiCreditCard,
   "low-stock": FiAlertTriangle,
   "fully-booked": FiShoppingCart,
@@ -48,7 +50,12 @@ const NotificationsStateCard = ({ message, onClear }) => (
 
 export default function OwnerNotifications() {
   const navigate = useNavigate();
-  const isOwner = getAuthRole() === "owner";
+  const isOwner = String(getAuthRole() || "").toLowerCase() === "owner";
+  const notificationsPage = useOwnerNotificationsPage({
+    isOwner,
+    navigate,
+    pageSize: PAGE_SIZE,
+  });
 
   useEffect(() => {
     if (!isOwner) {
@@ -82,7 +89,8 @@ export default function OwnerNotifications() {
     clearCurrentHistory,
     markAllGlobal,
     markOne,
-  } = useOwnerNotificationsPage({ isOwner, navigate, pageSize: PAGE_SIZE });
+    deleteOne,
+  } = notificationsPage;
 
   return (
     <div className="min-h-screen bg-neutral-50 p-3 md:p-8 overflow-x-hidden">
@@ -91,12 +99,12 @@ export default function OwnerNotifications() {
           title="Notifications"
           subtitle={`You have ${unread} unread notifications`}
           actions={
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+            <div className="flex flex-wrap items-stretch gap-2 w-full sm:w-auto">
               <button
                 onClick={clearAllNotifications}
                 className="inline-flex items-center justify-center gap-2 bg-white border border-neutral-300 text-neutral-700 px-4 py-2.5 rounded-button font-semibold text-sm hover:bg-neutral-50 w-full sm:w-auto"
               >
-                Clear Notifications
+                Delete All
               </button>
               <button
                 onClick={markAllGlobal}
@@ -183,7 +191,7 @@ export default function OwnerNotifications() {
               isRead={!!readMap[reconciliationItem.readKey]}
               onToggleRead={() =>
                 markOne(
-                  reconciliationItem.readKey,
+                  reconciliationItem,
                   !readMap[reconciliationItem.readKey],
                 )
               }
@@ -192,7 +200,9 @@ export default function OwnerNotifications() {
           ) : (
             <NotificationList className="space-y-3">
               {paginatedItems.map((item) => {
-                const isRead = Boolean(readMap[item.readKey]);
+                const isRead = item?.notificationId
+                  ? Boolean(item?.isRead)
+                  : Boolean(readMap[item.readKey]);
                 const Icon = iconMap[activeTab] || FiBell;
                 const cardClass = isRead
                   ? "border-emerald-200 bg-emerald-50/40"
@@ -235,11 +245,12 @@ export default function OwnerNotifications() {
 
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
                       <button
-                        onClick={() => markOne(item.readKey, !isRead)}
+                        onClick={() => markOne(item, !isRead)}
+                        disabled={isRead}
                         className="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-button border border-neutral-200 bg-white text-neutral-700 text-sm w-full sm:w-auto"
                       >
                         <FiCheck size={14} />
-                        {isRead ? "Mark unread" : "Mark read"}
+                        Mark read
                       </button>
                       <button
                         onClick={item.onAction}
@@ -247,6 +258,14 @@ export default function OwnerNotifications() {
                       >
                         <FiEye size={14} />
                         {item.actionLabel}
+                      </button>
+                      <button
+                        onClick={() => deleteOne(item)}
+                        title="Delete notification"
+                        aria-label="Delete notification"
+                        className="inline-flex items-center justify-center p-2.5 rounded-button bg-red-50 hover:bg-red-100 text-red-700 w-full sm:w-auto"
+                      >
+                        <FiTrash2 size={14} />
                       </button>
                     </div>
                   </div>
@@ -256,7 +275,7 @@ export default function OwnerNotifications() {
           )
         ) : null}
 
-        {!tabLoading && !tabError && orderedItems.length > PAGE_SIZE ? (
+        {!tabLoading && !tabError && totalPages > 1 ? (
           <div className="bg-white border border-neutral-200 rounded-card p-3 flex items-center justify-between gap-3">
             <p className="text-xs text-neutral-500">
               Page {currentPage} of {totalPages}

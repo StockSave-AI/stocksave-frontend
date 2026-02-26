@@ -14,7 +14,9 @@ const normalizeBankAccounts = (response) => {
     response?.banks ||
     response;
 
-  return Array.isArray(source) ? source : [];
+  if (!Array.isArray(source)) return [];
+  if (source.length === 0) return [];
+  return [source[source.length - 1]];
 };
 
 export default function PaymentMethodsSection() {
@@ -49,13 +51,20 @@ export default function PaymentMethodsSection() {
   };
 
   const handleSave = (newAccount) => {
+    const normalized = {
+      accountNumber:
+        newAccount?.accountNumber || newAccount?.account_number || "",
+      bankName: newAccount?.bankName || newAccount?.bank_name || "",
+      bankCode: newAccount?.bankCode || newAccount?.bank_code || "",
+      accountName: newAccount?.accountName || newAccount?.account_name || "",
+    };
     if (editingAccount !== null) {
       const updatedAccounts = [...accounts];
-      updatedAccounts[editingAccount] = newAccount;
+      updatedAccounts[editingAccount] = normalized;
       setAccounts(updatedAccounts);
       setEditingAccount(null);
     } else {
-      setAccounts([...accounts, newAccount]);
+      setAccounts([normalized]);
     }
     setShowAddAccount(false);
   };
@@ -91,37 +100,29 @@ export default function PaymentMethodsSection() {
         </div>
       ))}
 
-      <button
-        className="border px-4 py-2 rounded-lg hover:bg-neutral-100 text-sm mb-3"
-        onClick={() => {
-          setEditingAccount(null);
-          setShowAddAccount(true);
-        }}
-      >
-        + Add Method
-      </button>
+      {accounts.length === 0 ? (
+        <button
+          className="border px-4 py-2 rounded-lg hover:bg-neutral-100 text-sm mb-3"
+          onClick={() => {
+            setEditingAccount(null);
+            setShowAddAccount(true);
+          }}
+        >
+          + Add Method
+        </button>
+      ) : null}
 
       {showAddAccount && (
         <AddBankAccount
-          initialData={editingAccount !== null ? accounts[editingAccount] : null}
+          initialData={
+            editingAccount !== null ? accounts[editingAccount] : null
+          }
           onClose={() => {
             setShowAddAccount(false);
             setEditingAccount(null);
           }}
           onSave={handleSave}
         />
-      )}
-
-      {!showAddAccount && (
-        <div className="flex gap-4 mt-4">
-          <button className="flex-1 bg-white text-neutral-700 py-3 rounded-button font-semibold border border-neutral-200 hover:bg-neutral-50 transition-colors">
-            Cancel
-          </button>
-
-          <button className="flex-1 bg-success text-white py-3 rounded-button font-semibold hover:bg-green-700 transition-colors">
-            Submit Withdrawal Request
-          </button>
-        </div>
       )}
     </SectionCard>
   );

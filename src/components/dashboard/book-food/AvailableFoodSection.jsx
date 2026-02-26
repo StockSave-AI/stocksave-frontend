@@ -11,7 +11,6 @@ export default function AvailableFoodSection({
   onAddToCart,
   userBalance = 0,
   onLockedAction,
-  stockAlerts = [],
 }) {
   const filteredItems = foodItems.filter(
     (item) => selectedCategory === "All" || item.category === selectedCategory,
@@ -53,7 +52,6 @@ export default function AvailableFoodSection({
                 onAddToCart={onAddToCart}
                 userBalance={userBalance}
                 onLockedAction={onLockedAction}
-                stockAlerts={stockAlerts}
               />
             ))}
           </div>

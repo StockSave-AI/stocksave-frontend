@@ -26,7 +26,11 @@ const normalizeAccount = (item = {}) => ({
 const getSavedAccounts = () => {
   const persisted = JSON.parse(localStorage.getItem(REDEEM_ACCOUNTS_KEY) || "[]");
   if (!Array.isArray(persisted)) return [];
-  return persisted.map(normalizeAccount).filter((item) => item.accountNumber);
+  const normalized = persisted
+    .map(normalizeAccount)
+    .filter((item) => item.accountNumber);
+  if (normalized.length === 0) return [];
+  return [normalized[normalized.length - 1]];
 };
 
 const saveAccounts = (accounts = []) => {
@@ -55,6 +59,7 @@ const Redeem = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteAccountIndex, setDeleteAccountIndex] = useState(null);
+  const [editingAccountIndex, setEditingAccountIndex] = useState(null);
   const [errors, setErrors] = useState({
     method: false,
     amount: false,
@@ -145,6 +150,7 @@ const Redeem = () => {
       });
 
       setShowConfirmModal(false);
+      toast.success("Withdrawal successful.");
       setSuccessMessage(
         "Your withdrawal request has been received. The funds will be processed shortly.",
       );
@@ -170,11 +176,21 @@ const Redeem = () => {
 
   const handleSaveAccount = (newAccount) => {
     const normalized = normalizeAccount(newAccount);
-    const nextAccounts = [...accounts, normalized];
+    const nextAccounts =
+      Number.isInteger(editingAccountIndex) && accounts[editingAccountIndex]
+        ? accounts.map((item, idx) => (idx === editingAccountIndex ? normalized : item))
+        : [normalized];
     setAccounts(nextAccounts);
     saveAccounts(nextAccounts);
-    setSelectedAccount(nextAccounts.length - 1);
+    setSelectedAccount(0);
+    setEditingAccountIndex(null);
     setShowAddAccount(false);
+  };
+
+  const handleEditAccount = (index) => {
+    if (!accounts[index]) return;
+    setEditingAccountIndex(index);
+    setShowAddAccount(true);
   };
 
   const handleDeleteAccount = (index) => {
@@ -255,7 +271,11 @@ const Redeem = () => {
           accounts={accounts}
           selectedAccount={selectedAccount}
           onSelectAccount={setSelectedAccount}
-          onAddAccount={() => setShowAddAccount(true)}
+          onAddAccount={() => {
+            setEditingAccountIndex(null);
+            setShowAddAccount(true);
+          }}
+          onEditAccount={handleEditAccount}
           onDeleteAccount={handleDeleteAccount}
           onCancel={handleCancel}
           onSubmit={handleSubmit}
@@ -291,7 +311,13 @@ const Redeem = () => {
       {showAddAccount ? (
         <AddBankAccount
           bankOptions={savingsBanksQuery.data?.data || savingsBanksQuery.data || []}
-          onClose={() => setShowAddAccount(false)}
+          initialData={
+            Number.isInteger(editingAccountIndex) ? accounts[editingAccountIndex] : null
+          }
+          onClose={() => {
+            setShowAddAccount(false);
+            setEditingAccountIndex(null);
+          }}
           onSave={handleSaveAccount}
         />
       ) : null}
