@@ -2,25 +2,26 @@ import { FaNairaSign } from "react-icons/fa6";
 import { formatCurrency } from "../../utils/currency";
 
 function StatusBadge({ status }) {
-  let styles = "";
-
-  if (status === "completed") {
-    styles = "bg-success/10 text-success";
-  } else if (status === "withdrawal") {
-    styles = "bg-error/10 text-error";
-  } else {
-    styles = "bg-warning/10 text-warning";
-  }
+  const normalized = String(status || "").toLowerCase();
+  const isDeposit = normalized === "completed" || normalized === "deposit";
+  const isBooking = normalized.includes("book");
+  const styles = isDeposit
+    ? "bg-success/10 text-success"
+    : isBooking
+      ? "bg-error/10 text-error"
+      : "bg-warning/10 text-warning";
+  const label = isDeposit ? "Completed" : isBooking ? "Booked Item" : status;
 
   return (
     <span className={`text-xs px-2 py-1 rounded-full capitalize ${styles}`}>
-      {status}
+      {label}
     </span>
   );
 }
 
 function ActivityItem({ type, date, amount, status }) {
   const safeAmount = Number.isFinite(Number(amount)) ? Number(amount) : 0;
+  const isPositive = safeAmount > 0;
 
   return (
     <div className="flex justify-between items-center py-4 border-b border-neutral-200 last:border-none">
@@ -36,8 +37,8 @@ function ActivityItem({ type, date, amount, status }) {
       </div>
 
       <div className="text-right">
-        <p className={`font-semibold ${safeAmount > 0 ? "text-success" : "text-error"}`}>
-          {safeAmount > 0 ? "+" : "-"}
+        <p className={`font-semibold ${isPositive ? "text-success" : "text-error"}`}>
+          {isPositive ? "+" : "-"}
           {formatCurrency(Math.abs(safeAmount))}
         </p>
 

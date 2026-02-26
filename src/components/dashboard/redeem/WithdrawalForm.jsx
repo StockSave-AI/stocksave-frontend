@@ -1,4 +1,4 @@
-import { FiCreditCard, FiHome } from "react-icons/fi";
+import { FiCreditCard, FiHome, FiTrash2 } from "react-icons/fi";
 import { formatCurrency } from "../../../utils/currency";
 import CashPickupInstructions from "./CashPickupInstructions";
 import QuickAmountButton from "./QuickAmountButton";
@@ -43,14 +43,16 @@ export default function WithdrawalForm({
   selectedAccount,
   onSelectAccount,
   onAddAccount,
+  onDeleteAccount,
   onCancel,
   onSubmit,
+  isSubmitting,
   errors,
   accountsLoading,
   accountsError,
 }) {
   const selectedAmountNumber = Number(selectedAmount || 0);
-  const canSubmit = Boolean(method) && selectedAmountNumber > 0;
+  const canSubmit = Boolean(method) && selectedAmountNumber > 0 && !isSubmitting;
   const hasCustomValue = selectedAmount !== null && selectedAmount !== "";
 
   return (
@@ -172,20 +174,21 @@ export default function WithdrawalForm({
             </p>
           )}
           {accounts.map((account, idx) => (
-            <button
-              type="button"
+            <div
               key={account.id || idx}
-              className="w-full border border-neutral-200 rounded-lg p-4 flex items-center justify-between"
-              onClick={() => onSelectAccount(idx)}
+              className="w-full border border-neutral-200 rounded-lg p-4 flex items-center justify-between gap-3"
             >
-              <div className="flex items-center gap-3 text-left">
+              <button
+                type="button"
+                onClick={() => onSelectAccount(idx)}
+                className="flex items-center gap-3 text-left flex-1"
+              >
                 <div className="w-10 h-10 bg-neutral-100 rounded-md flex items-center justify-center">
                   <FiCreditCard className="text-neutral-400" size={20} />
                 </div>
                 <div>
                   <p className="font-bold text-sm">
-                    **** **** ****{" "}
-                    {String(account.accountNumber || "").slice(-4)}
+                    **** **** **** {String(account.accountNumber || "").slice(-4)}
                   </p>
                   <p className="text-xs text-neutral-500">
                     {account.accountName}
@@ -194,15 +197,26 @@ export default function WithdrawalForm({
                     {account.bankName}
                   </p>
                 </div>
+              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => onDeleteAccount(idx)}
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-md text-error hover:bg-error/10 transition"
+                  aria-label="Delete bank account"
+                  title="Delete account"
+                >
+                  <FiTrash2 size={16} />
+                </button>
+                <div
+                  className={`w-4 h-4 rounded-full border-2 ${
+                    selectedAccount === idx
+                      ? "border-primary-500 bg-primary-500"
+                      : "border-neutral-300 bg-white"
+                  }`}
+                />
               </div>
-              <div
-                className={`w-4 h-4 rounded-full border-2 ${
-                  selectedAccount === idx
-                    ? "border-primary-500 bg-primary-500"
-                    : "border-neutral-300 bg-white"
-                }`}
-              />
-            </button>
+            </div>
           ))}
           {errors.account && (
             <p className="text-sm text-error">
@@ -239,7 +253,7 @@ export default function WithdrawalForm({
               : "bg-neutral-200 text-neutral-500 cursor-not-allowed"
           }`}
         >
-          Request Withdrawal
+          {isSubmitting ? "Submitting..." : "Request Withdrawal"}
         </button>
       </div>
     </div>

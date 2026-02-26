@@ -1,17 +1,16 @@
-import { useMemo, useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
 import { FiEye, FiEyeOff, FiTrendingUp } from "react-icons/fi";
 import { FaNairaSign } from "react-icons/fa6";
 import { FaCreditCard, FaCashRegister } from "react-icons/fa";
-import toast from "react-hot-toast";
 import PaymentMethodCard from "./PaymentMethodCard";
 import PaystackForm from "./PaystackForm";
 import CashDepositForm from "./CashDepositForm";
 import RecentDeposits from "./RecentDeposits";
 import { useCustomerSummary } from "../../hooks/useCustomerSummary";
+import useSavingsBalance from "../../hooks/useSavingsBalance";
 import { useRecentSavings } from "../../hooks/useRecentSavings";
-import { useVerifySavings } from "../../hooks/useVerifySavings";
 import { useSavingsHistory } from "../../hooks/useSavingsHistory";
+import { useMyBookings } from "../../hooks/useInventory";
 import Loader from "../../ui/Loader";
 import { formatDisplayDate } from "../../../utils/date";
 import { formatCurrency } from "../../../utils/currency";
@@ -31,13 +30,15 @@ const cashSteps = [
 ];
 
 const mapRecentSavingsToDeposits = (items = []) => {
-  return items.map((item, index) => ({
-    id: item.id || index,
-    amount: formatCurrency(Number.parseFloat(item.amount || 0)),
-    source: item.method || "Savings",
-    status: item.status || "Pending",
-    date: formatDisplayDate(item.created_at || item.date, "-"),
-  }));
+  return items
+    .filter((item) => String(item.type || "").toLowerCase() === "deposit")
+    .map((item, index) => ({
+      id: item.id || index,
+      amount: formatCurrency(Number.parseFloat(item.amount || 0)),
+      source: item.method || "Savings",
+      status: item.status || "Pending",
+      date: formatDisplayDate(item.created_at || item.date, "-"),
+    }));
 };
 
 const calculateCompletedBalance = (transactions = []) => {
@@ -48,16 +49,15 @@ const calculateCompletedBalance = (transactions = []) => {
     const amount = Number.parseFloat(tx?.amount || 0);
     const type = String(tx?.type || tx?.transaction_type || tx?.method || "").toLowerCase();
 
+    if (type.includes("book")) return total;
     if (type.includes("withdraw")) return total - amount;
     return total + amount;
   }, 0);
 };
 
 export default function AddSavings() {
-  const location = useLocation();
-  const navigate = useNavigate();
   const [selectedMethod, setSelectedMethod] = useState("paystack");
-  const [showBalance, setShowBalance] = useState(true);
+  const [showBalance, setShowBalance] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState(null);
 
   const {
@@ -65,22 +65,44 @@ export default function AddSavings() {
     isLoading: summaryLoading,
     isError: summaryError,
   } = useCustomerSummary();
+  const savingsBalanceQuery = useSavingsBalance();
+  const myBookingsQuery = useMyBookings();
   const {
     data: recentSavingsResponse,
     isLoading: recentSavingsLoading,
     isError: recentSavingsError,
   } = useRecentSavings();
-  const verifyMutation = useVerifySavings();
 
   const summary = summaryResponse?.data || {};
+  const savingsBalanceFromApi = summaryResponse?.data?.balance;
   const userId = summary?.profile?.id;
   const { data: historyResponse } = useSavingsHistory(userId);
   const history = Array.isArray(historyResponse) ? historyResponse : historyResponse?.data || [];
   const completedBalance = calculateCompletedBalance(history);
-  const balance =
+  const apiBalance =
+    savingsBalanceQuery.data?.data?.balance ?? savingsBalanceQuery.data?.balance ?? savingsBalanceFromApi;
+
+  const bookedTotal = (() => {
+    const rows = Array.isArray(myBookingsQuery.data)
+      ? myBookingsQuery.data
+      : myBookingsQuery.data?.data || [];
+    return rows.reduce((sum, row) => {
+      const status = String(row?.status || "").toLowerCase();
+      if (status === "cancelled") return sum;
+      const amount =
+        Number(row?.total_cost || row?.total || row?.amount || 0) || 0;
+      return sum + amount;
+    }, 0);
+  })();
+
+  const computedBalance =
     Number.isFinite(completedBalance) && history.length > 0
       ? completedBalance
       : Number(summary?.summary_cards?.total_savings || 0);
+
+  const balance = Number.isFinite(apiBalance)
+    ? Number(apiBalance)
+    : Math.max(0, computedBalance - bookedTotal);
 
   const deposits = useMemo(() => {
     const recent = Array.isArray(recentSavingsResponse)
@@ -97,21 +119,6 @@ export default function AddSavings() {
 
     return mapRecentSavingsToDeposits(fromSummary);
   }, [recentSavingsResponse, summary?.recent_activity]);
-
-  useEffect(() => {
-    const query = new URLSearchParams(location.search);
-    const reference = query.get("reference") || query.get("trxref");
-    if (!reference) return;
-
-    verifyMutation.mutate(reference, {
-      onSuccess: () => {
-        navigate("/dashboard", { replace: true });
-      },
-      onError: (error) => {
-        toast.error(error?.message || "Unable to verify payment.");
-      },
-    });
-  }, [location.pathname, location.search, navigate, verifyMutation]);
 
   if (summaryLoading) {
     return <Loader />;

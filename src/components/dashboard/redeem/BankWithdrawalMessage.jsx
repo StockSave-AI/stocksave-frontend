@@ -1,6 +1,13 @@
 import { FiCheckCircle, FiX } from "react-icons/fi";
+import { formatCurrency } from "../../../utils/currency";
 
-export default function BankWithdrawalMessage({ message, onClose }) {
+export default function BankWithdrawalMessage({ message, details, onClose }) {
+  const reference = details?.reference || details?.data?.reference || null;
+  const newBalanceRaw =
+    details?.new_balance ?? details?.data?.new_balance ?? null;
+  const parsedBalance = Number(newBalanceRaw);
+  const hasBalance = Number.isFinite(parsedBalance);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-xl bg-white p-8 rounded-card border border-neutral-200 shadow-card">
@@ -21,6 +28,22 @@ export default function BankWithdrawalMessage({ message, onClose }) {
         <p className="text-sm text-neutral-600 mt-2">
           {message}
         </p>
+        {reference || hasBalance ? (
+          <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-3 space-y-1">
+            {reference ? (
+              <p className="text-xs text-neutral-600">
+                <span className="font-semibold text-neutral-800">Reference:</span>{" "}
+                {reference}
+              </p>
+            ) : null}
+            {hasBalance ? (
+              <p className="text-xs text-neutral-600">
+                <span className="font-semibold text-neutral-800">New Balance:</span>{" "}
+                {formatCurrency(parsedBalance)}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         <button
           type="button"
           onClick={onClose}

@@ -36,6 +36,7 @@ const normalizeStockData = (response) => {
       (category.products || []).flatMap((product) => {
         const productName = product.product_name || product.name || "Unnamed Item";
         const variants = product.variants || [];
+        const productImage = product.image_url || product.image || "";
 
         if (variants.length === 0) {
           return [
@@ -43,7 +44,7 @@ const normalizeStockData = (response) => {
               id: product.id,
               name: productName,
               quantity: 0,
-              image: "",
+              image: productImage,
             },
           ];
         }
@@ -58,7 +59,7 @@ const normalizeStockData = (response) => {
                 variant.quantity ??
                 0,
             ) || 0,
-          image: "",
+          image: productImage,
         }));
       }),
     );

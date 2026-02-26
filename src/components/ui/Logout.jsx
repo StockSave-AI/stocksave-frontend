@@ -7,19 +7,22 @@ function Logout({ isOpen, onClose, onConfirm }) {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    if (isOpen) {
-      fetchProfile();
-    }
-  }, [isOpen]);
+    let isMounted = true;
+    if (!isOpen) return undefined;
 
-  const fetchProfile = async () => {
-    try {
-      const data = await getProfile();
-      setUser(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    getProfile()
+      .then((data) => {
+        if (!isMounted) return;
+        setUser(data);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

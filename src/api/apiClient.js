@@ -28,7 +28,10 @@ export const apiClient = async (path, { method = "GET", body } = {}) => {
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(data?.message || `Request failed (${response.status})`);
+    const error = new Error(data?.message || `Request failed (${response.status})`);
+    error.status = response.status;
+    error.data = data;
+    throw error;
   }
 
   return data;

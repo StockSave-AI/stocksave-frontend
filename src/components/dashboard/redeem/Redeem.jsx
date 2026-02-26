@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FiCreditCard, FiInfo } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -6,118 +6,109 @@ import AddBankAccount from "./AddBankAccount";
 import WithdrawalForm from "./WithdrawalForm";
 import BankWithdrawalMessage from "./BankWithdrawalMessage";
 import WithdrawalConfirmModal from "./WithdrawalConfirmModal";
+import DeleteAccountModal from "./DeleteAccountModal";
 import { formatCurrency } from "../../../utils/currency";
 import { useWithdraw } from "../../hooks/useWithdraw";
 import { useCustomerSummary } from "../../hooks/useCustomerSummary";
 import { useSavingsBanks, useSavingsRedeem } from "../../hooks/useSavingsMutations";
-import { useSavingsHistory } from "../../hooks/useSavingsHistory";
+import useSavingsBalance from "../../hooks/useSavingsBalance";
 
 const QUICK_AMOUNTS = [5000, 10000, 20000, 60000];
 const REDEEM_ACCOUNTS_KEY = "redeem_bank_accounts";
+
+const normalizeAccount = (item = {}) => ({
+  bankCode: item?.bankCode || item?.bank_code || item?.code || "",
+  bankName: item?.bankName || item?.bank_name || item?.name || "",
+  accountName: item?.accountName || item?.account_name || "",
+  accountNumber: item?.accountNumber || item?.account_number || "",
+});
+
+const getSavedAccounts = () => {
+  const persisted = JSON.parse(localStorage.getItem(REDEEM_ACCOUNTS_KEY) || "[]");
+  if (!Array.isArray(persisted)) return [];
+  return persisted.map(normalizeAccount).filter((item) => item.accountNumber);
+};
+
+const saveAccounts = (accounts = []) => {
+  localStorage.setItem(REDEEM_ACCOUNTS_KEY, JSON.stringify(accounts));
+};
+
+const getInitialAccountState = () => {
+  const initialAccounts = getSavedAccounts();
+  return {
+    accounts: initialAccounts,
+    selectedAccount: initialAccounts.length > 0 ? 0 : null,
+  };
+};
 
 const Redeem = () => {
   const navigate = useNavigate();
   const [method, setMethod] = useState("bank");
   const [selectedAmount, setSelectedAmount] = useState(null);
   const [showAddAccount, setShowAddAccount] = useState(false);
-  const [accounts, setAccounts] = useState([]);
-  const [selectedAccount, setSelectedAccount] = useState(null);
-  const [availableBalance, setAvailableBalance] = useState(0);
+  const [accounts, setAccounts] = useState(() => getInitialAccountState().accounts);
+  const [selectedAccount, setSelectedAccount] = useState(
+    () => getInitialAccountState().selectedAccount,
+  );
   const [successMessage, setSuccessMessage] = useState("");
+  const [successDetails, setSuccessDetails] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const successTimeoutRef = useRef(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteAccountIndex, setDeleteAccountIndex] = useState(null);
   const [errors, setErrors] = useState({
     method: false,
     amount: false,
     account: false,
   });
+  const successTimeoutRef = useRef(null);
+
   const withdrawMutation = useWithdraw();
   const { data: summaryResponse } = useCustomerSummary();
-  const summary = summaryResponse?.data || {};
-  const userId = summary?.profile?.id;
+  const savingsBalanceQuery = useSavingsBalance();
   const savingsBanksQuery = useSavingsBanks();
   const savingsRedeemQuery = useSavingsRedeem();
-  const savingsHistoryQuery = useSavingsHistory(userId);
-  const quickAmounts = (() => {
+
+  const summary = summaryResponse?.data || {};
+  const fallbackBalance = Number(summary?.summary_cards?.total_savings || 0);
+  const balanceFromApi =
+    savingsBalanceQuery.data?.data?.balance ?? savingsBalanceQuery.data?.balance;
+  const availableBalance = Number.isFinite(balanceFromApi)
+    ? Number(balanceFromApi)
+    : Math.max(0, fallbackBalance);
+
+  const quickAmounts = useMemo(() => {
     const payload = savingsRedeemQuery.data?.data || savingsRedeemQuery.data || {};
     const amounts = payload.preset_amounts || payload.quick_amounts || payload.amounts || [];
-    if (Array.isArray(amounts) && amounts.length > 0) {
-      return amounts.map((value) => Number(value)).filter((value) => Number.isFinite(value));
-    }
-    return QUICK_AMOUNTS;
-  })();
-
-  const fetchRedeemData = useCallback(async () => {
-    const persistedAccounts = JSON.parse(
-      localStorage.getItem(REDEEM_ACCOUNTS_KEY) || "[]",
-    );
-    const normalizedPersisted = Array.isArray(persistedAccounts)
-      ? persistedAccounts.map((item) => ({
-          bankName: item?.bankName || item?.name || "",
-          bankCode: item?.bankCode || item?.code || "",
-          accountName: item?.accountName || "",
-          accountNumber: item?.accountNumber || "",
-        }))
-      : [];
-
-    const mergedAccounts = [...normalizedPersisted];
-
-    setAccounts(mergedAccounts);
-    setSelectedAccount(mergedAccounts.length > 0 ? 0 : null);
-  }, [savingsBanksQuery.data]);
-
-  useEffect(() => {
-    fetchRedeemData();
-  }, [fetchRedeemData]);
-
-  useEffect(() => {
-    const history = Array.isArray(savingsHistoryQuery.data)
-      ? savingsHistoryQuery.data
-      : savingsHistoryQuery.data?.data || [];
-
-    if (!Array.isArray(history) || history.length === 0) {
-      setAvailableBalance(Number(summary?.summary_cards?.total_savings || 0));
-      return;
-    }
-
-    const total = history.reduce((acc, tx) => {
-      const status = String(tx?.status || "").toLowerCase();
-      if (status !== "completed") return acc;
-      const amount = Number(tx?.amount || 0);
-      const type = String(tx?.type || tx?.transaction_type || "").toLowerCase();
-      if (type.includes("withdraw")) return acc - amount;
-      return acc + amount;
-    }, 0);
-
-    setAvailableBalance(total);
-  }, [savingsHistoryQuery.data, summary?.summary_cards?.total_savings]);
+    if (!Array.isArray(amounts) || amounts.length === 0) return QUICK_AMOUNTS;
+    return amounts.map((value) => Number(value)).filter((value) => Number.isFinite(value));
+  }, [savingsRedeemQuery.data]);
 
   useEffect(() => {
     return () => {
-      if (successTimeoutRef.current) {
-        clearTimeout(successTimeoutRef.current);
-      }
+      if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
     };
   }, []);
 
   const handleMethodChange = (nextMethod) => {
     setMethod(nextMethod);
     setSuccessMessage("");
+    setSuccessDetails(null);
     setErrors((prev) => ({ ...prev, method: false, account: false }));
   };
 
   const handleSelectAmount = (value) => {
     setSelectedAmount(value);
     setSuccessMessage("");
+    setSuccessDetails(null);
     setErrors((prev) => ({ ...prev, amount: false }));
   };
 
-  const handleSubmit = () => {
+  const validateSubmission = () => {
     const hasMethod = Boolean(method);
     const amountValue = Number(selectedAmount || 0);
-    const hasValidAmount = amountValue > 0;
+    const hasValidAmount = Number.isFinite(amountValue) && amountValue > 0;
     const requiresAccount = method === "bank";
-    const hasAccount = selectedAccount !== null;
+    const hasAccount = selectedAccount !== null && accounts[selectedAccount];
 
     const nextErrors = {
       method: !hasMethod,
@@ -126,34 +117,41 @@ const Redeem = () => {
     };
 
     setErrors(nextErrors);
+    return !(nextErrors.method || nextErrors.amount || nextErrors.account);
+  };
 
-    if (nextErrors.method || nextErrors.amount || nextErrors.account) {
-      return;
-    }
-
+  const handleSubmit = () => {
+    if (!validateSubmission()) return;
     setShowConfirmModal(true);
   };
 
   const handleConfirmWithdrawal = async () => {
     const amount = Number(selectedAmount || 0);
-    const selectedBankAccount =
-      method === "bank" && selectedAccount !== null ? accounts[selectedAccount] : null;
+    const selectedBank = accounts[selectedAccount] || null;
+
+    if (method === "cash") {
+      setShowConfirmModal(false);
+      setSuccessMessage("Follow the cash pickup instructions to complete redemption.");
+      setSuccessDetails(null);
+      return;
+    }
 
     try {
-      await withdrawMutation.mutateAsync({
+      const response = await withdrawMutation.mutateAsync({
         amount,
-        account_name: selectedBankAccount?.accountName,
-        account_number: selectedBankAccount?.accountNumber,
-        bank_code: selectedBankAccount?.bankCode,
+        account_name: selectedBank?.accountName,
+        account_number: selectedBank?.accountNumber,
+        bank_code: selectedBank?.bankCode,
       });
 
       setShowConfirmModal(false);
       setSuccessMessage(
         "Your withdrawal request has been received. The funds will be processed shortly.",
       );
-      await fetchRedeemData();
+      setSuccessDetails(response?.data || response || null);
       successTimeoutRef.current = setTimeout(() => {
         setSuccessMessage("");
+        setSuccessDetails(null);
         navigate("/dashboard");
       }, 3000);
     } catch (error) {
@@ -165,8 +163,53 @@ const Redeem = () => {
     setMethod("bank");
     setSelectedAmount(null);
     setSuccessMessage("");
+    setSuccessDetails(null);
     setShowConfirmModal(false);
     setErrors({ method: false, amount: false, account: false });
+  };
+
+  const handleSaveAccount = (newAccount) => {
+    const normalized = normalizeAccount(newAccount);
+    const nextAccounts = [...accounts, normalized];
+    setAccounts(nextAccounts);
+    saveAccounts(nextAccounts);
+    setSelectedAccount(nextAccounts.length - 1);
+    setShowAddAccount(false);
+  };
+
+  const handleDeleteAccount = (index) => {
+    if (!accounts[index]) return;
+    setDeleteAccountIndex(index);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteAccount = () => {
+    const index = Number(deleteAccountIndex);
+    if (!Number.isInteger(index) || !accounts[index]) {
+      setShowDeleteModal(false);
+      setDeleteAccountIndex(null);
+      return;
+    }
+    const nextAccounts = accounts.filter((_, idx) => idx !== index);
+    setAccounts(nextAccounts);
+    saveAccounts(nextAccounts);
+
+    if (nextAccounts.length === 0) {
+      setSelectedAccount(null);
+      return;
+    }
+
+    if (selectedAccount === index) {
+      setSelectedAccount(0);
+      return;
+    }
+
+    if (selectedAccount > index) {
+      setSelectedAccount(selectedAccount - 1);
+    }
+
+    setShowDeleteModal(false);
+    setDeleteAccountIndex(null);
   };
 
   return (
@@ -196,12 +239,14 @@ const Redeem = () => {
         </div>
         <div>
           <p className="font-semibold text-sm">Withdrawal Terms</p>
-          <p className="text-xs text-neutral-500">Processing time: 2-5 business days</p>
+          <p className="text-xs text-neutral-500">
+            Processing time: 2-5 business days
+          </p>
         </div>
       </div>
 
-      {!showAddAccount && (
-      <WithdrawalForm
+      {!showAddAccount ? (
+        <WithdrawalForm
           method={method}
           onMethodChange={handleMethodChange}
           selectedAmount={selectedAmount}
@@ -211,22 +256,28 @@ const Redeem = () => {
           selectedAccount={selectedAccount}
           onSelectAccount={setSelectedAccount}
           onAddAccount={() => setShowAddAccount(true)}
+          onDeleteAccount={handleDeleteAccount}
           onCancel={handleCancel}
           onSubmit={handleSubmit}
+          isSubmitting={withdrawMutation.isPending}
           errors={errors}
           accountsLoading={savingsBanksQuery.isLoading}
           accountsError={savingsBanksQuery.isError}
         />
-      )}
+      ) : null}
 
-      {successMessage && (
+      {successMessage ? (
         <BankWithdrawalMessage
           message={successMessage}
-          onClose={() => setSuccessMessage("")}
+          details={successDetails}
+          onClose={() => {
+            setSuccessMessage("");
+            setSuccessDetails(null);
+          }}
         />
-      )}
+      ) : null}
 
-      {showConfirmModal && (
+      {showConfirmModal ? (
         <WithdrawalConfirmModal
           amountLabel={formatCurrency(selectedAmount)}
           methodLabel={method === "bank" ? "Bank Transfer" : "Cash Pickup"}
@@ -235,21 +286,28 @@ const Redeem = () => {
           onClose={() => setShowConfirmModal(false)}
           isSubmitting={withdrawMutation.isPending}
         />
-      )}
+      ) : null}
 
-      {showAddAccount && (
+      {showAddAccount ? (
         <AddBankAccount
           bankOptions={savingsBanksQuery.data?.data || savingsBanksQuery.data || []}
           onClose={() => setShowAddAccount(false)}
-          onSave={(newAccount) => {
-            const nextAccounts = [...accounts, newAccount];
-            setAccounts(nextAccounts);
-            localStorage.setItem(REDEEM_ACCOUNTS_KEY, JSON.stringify(nextAccounts));
-            setSelectedAccount(accounts.length);
-            setShowAddAccount(false);
-          }}
+          onSave={handleSaveAccount}
         />
-      )}
+      ) : null}
+
+      <DeleteAccountModal
+        isOpen={showDeleteModal}
+        account={
+          Number.isInteger(deleteAccountIndex) ? accounts[deleteAccountIndex] : null
+        }
+        isDeleting={false}
+        onConfirm={confirmDeleteAccount}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteAccountIndex(null);
+        }}
+      />
     </div>
   );
 };

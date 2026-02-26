@@ -1,15 +1,9 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { useState } from "react";
 import { clearAuthToken, getAuthToken, setAuthToken } from "../../utils/authStorage";
-
-const AuthContext = createContext();
+import { AuthContext } from "./authContextStore";
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(null);
-
-  useEffect(() => {
-    const storedToken = getAuthToken();
-    if (storedToken) setToken(storedToken);
-  }, []);
+  const [token, setToken] = useState(() => getAuthToken());
 
   const saveToken = (newToken, rememberMe = false) => {
     setToken(newToken);
@@ -26,5 +20,3 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-
-export const useAuth = () => useContext(AuthContext);

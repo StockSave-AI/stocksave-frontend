@@ -11,7 +11,6 @@ import {
   useCreatePlan,
   usePausePlan,
   usePlans,
-  useResumePlan,
   useUpdatePlan,
   useUpdatePlanSettings,
 } from "../../hooks/usePlans";
@@ -39,14 +38,21 @@ const mapHistory = (items) =>
     type: item.method || item.type || "-",
   }));
 
-const mapUpcoming = (items) =>
-  items.map((item, index) => ({
-    id: item.id || index,
-    amount: formatCurrency(item.amount),
-    date: formatDisplayDate(item.date, "-"),
-    days: item.days ?? calculateDays(item.date),
-    status: item.status || "Upcoming",
-  }));
+const PLAN_TYPE_MAP = {
+  daily: "Daily",
+  weekly: "Weekly",
+  monthly: "Monthly",
+};
+
+const normalizePlanTypeValue = (value) => {
+  const normalized = String(value || "monthly").toLowerCase();
+  return ["daily", "weekly", "monthly"].includes(normalized) ? normalized : "monthly";
+};
+
+const formatPlanTypePayload = (value) => {
+  const normalized = normalizePlanTypeValue(value);
+  return PLAN_TYPE_MAP[normalized];
+};
 
 export default function PaymentPlan() {
   const location = useLocation();
@@ -58,13 +64,11 @@ export default function PaymentPlan() {
   const [openModalTick, setOpenModalTick] = useState(
     shouldOpenCreateFromQuery ? 1 : 0,
   );
-  const [draftPlan, setDraftPlan] = useState(null);
 
   const plansQuery = usePlans();
   const createPlanMutation = useCreatePlan();
   const updatePlanMutation = useUpdatePlan();
   const pausePlanMutation = usePausePlan();
-  const resumePlanMutation = useResumePlan();
   const updateSettingsMutation = useUpdatePlanSettings();
 
   const payload = useMemo(
@@ -86,15 +90,29 @@ export default function PaymentPlan() {
       progressStats: progressRaw,
     });
 
+    const rawStatus = String(currentPlanRaw.status || "").toLowerCase();
+    const normalizedStatus =
+      rawStatus === "paused" || rawStatus === "closed"
+        ? "closed"
+        : rawStatus === "active"
+          ? "active"
+          : "inactive";
+
     return {
       id: currentPlanRaw.id,
-      status: currentPlanRaw.status || "inactive",
+      status: normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1),
+      plan_type: currentPlanRaw.plan_type,
       frequency: currentPlanRaw.plan_type || "",
       monthlyAmount: Number(currentPlanRaw.amount || 0),
-      durationMonths: Number(metrics.durationUnits || 0),
+      durationMonths: Number(currentPlanRaw.duration || metrics.durationUnits || 0),
+      durationUnit: currentPlanRaw.duration_unit || metrics.durationUnit || metrics.intervalLabel,
       startDate: currentPlanRaw.start_date || "",
-      endDate: currentPlanRaw.end_date || metrics.endDate,
-      nextPayment: currentPlanRaw.next_payment || metrics.nextPayment,
+      endDate: currentPlanRaw.end_date || metrics.endDate || "",
+      nextPayment:
+        currentPlanRaw.next_payment_date ||
+        currentPlanRaw.next_payment ||
+        metrics.nextPayment ||
+        "",
       totalTarget: Number(currentPlanRaw.target_amount || 0),
       paymentsMade: Number(metrics.completedIntervals || 0),
       totalSaved: Number(metrics.totalSaved || 0),
@@ -102,100 +120,103 @@ export default function PaymentPlan() {
     };
   }, [currentPlanRaw, progressRaw]);
 
-  const plan = draftPlan || fetchedPlan;
+  const hasFetchedPlan = Boolean(fetchedPlan);
+  const isActivePlan = hasFetchedPlan && String(fetchedPlan.status || "").toLowerCase() === "active";
+  const activePlan = isActivePlan ? fetchedPlan : null;
+  const previousPlan = hasFetchedPlan && !isActivePlan ? fetchedPlan : null;
+  const planForMetrics = activePlan || previousPlan;
   const planMetrics = useMemo(
     () =>
       calculatePlanMetrics({
-        plan,
+        plan: planForMetrics,
         progressStats: progressRaw,
+        paymentHistory: paymentHistoryRaw,
       }),
-    [plan, progressRaw],
+    [planForMetrics, progressRaw, paymentHistoryRaw],
   );
   const history = useMemo(() => mapHistory(paymentHistoryRaw), [paymentHistoryRaw]);
 
   const upcoming = useMemo(() => {
+    if (!activePlan) return [];
     if (upcomingRaw.length > 0) {
-      return mapUpcoming(upcomingRaw);
+      return upcomingRaw.map((item, index) => ({
+        id: item.id || index,
+        amount: formatCurrency(item.amount),
+        date: formatDisplayDate(item.date, "-"),
+        days: item.days ?? calculateDays(item.date),
+        status: item.status || "Upcoming",
+      }));
     }
 
-    if (!planMetrics?.nextPayment) return [];
+    if (!planMetrics?.upcomingDates?.length) return [];
 
-    return [
-      {
-        id: "calculated-next-payment",
-        amount: formatCurrency(planMetrics.amountPerInterval),
-        date: formatDisplayDate(planMetrics.nextPayment),
-        days: calculateDays(planMetrics.nextPayment),
-        status: "Upcoming",
-      },
-    ];
-  }, [planMetrics, upcomingRaw]);
+    return planMetrics.upcomingDates.map((date, index) => ({
+      id: `calculated-upcoming-${index}`,
+      amount: formatCurrency(planMetrics.amountPerInterval),
+      date: formatDisplayDate(date, "-"),
+      days: calculateDays(date),
+      status: "Upcoming",
+    }));
+  }, [activePlan, planMetrics, upcomingRaw]);
 
   const handlePlanSubmit = async ({ mode, payload: planPayload }) => {
-    const previewMetrics = calculatePlanMetrics({
-      plan: {
-        id: plan?.id || "temp-plan",
-        status: plan?.status || "active",
-        plan_type: planPayload.plan_type,
-        amount: planPayload.amount,
-        target_amount: planPayload.target_amount,
-        start_date: planPayload.start_date,
-      },
-      progressStats: { total_saved: plan?.totalSaved || 0 },
-    });
-
-    setDraftPlan({
-      id: plan?.id || "temp-plan",
-      status: plan?.status || "active",
-      frequency: planPayload.plan_type,
-      monthlyAmount: Number(planPayload.amount || 0),
-      durationMonths: Number(previewMetrics.durationUnits || 0),
-      startDate: planPayload.start_date,
-      endDate: previewMetrics.endDate,
-      nextPayment: previewMetrics.nextPayment,
-      totalTarget: Number(planPayload.target_amount || 0),
-      paymentsMade: Number(previewMetrics.completedIntervals || 0),
-      totalSaved: Number(previewMetrics.totalSaved || 0),
-      missedPayments: Number(plan?.missedPayments || 0),
-    });
+    const normalizedPayload = {
+      ...planPayload,
+      plan_type: normalizePlanTypeValue(planPayload.plan_type),
+    };
 
     try {
       if (mode === "create") {
-        await createPlanMutation.mutateAsync(planPayload);
+        await createPlanMutation.mutateAsync({
+          ...normalizedPayload,
+          plan_type: formatPlanTypePayload(normalizedPayload.plan_type),
+        });
         toast.success("Plan created successfully.");
-      } else if (plan?.id) {
+      } else if (planForMetrics?.id) {
         await updatePlanMutation.mutateAsync({
-          id: plan.id,
+          id: planForMetrics.id,
           payload: {
-            plan_type: planPayload.plan_type,
-            amount: planPayload.amount,
-            target_amount: planPayload.target_amount,
-            duration_months: planPayload.duration_months,
-            start_date: planPayload.start_date,
+            plan_type: formatPlanTypePayload(normalizedPayload.plan_type),
+            amount: normalizedPayload.amount,
+            target_amount: normalizedPayload.target_amount,
+            duration: normalizedPayload.duration,
+            duration_unit: normalizedPayload.duration_unit,
+            duration_months: normalizedPayload.duration_months,
+            start_date: normalizedPayload.start_date,
           },
         });
         toast.success("Plan updated successfully.");
       }
 
       await plansQuery.refetch();
-      setDraftPlan(null);
       return true;
     } catch (error) {
-      setDraftPlan(null);
       toast.error(error.message || "Failed to save plan.");
       return false;
     }
   };
 
   const handlePauseResume = async () => {
-    if (!plan?.id) return;
+    const referencePlan = activePlan || previousPlan;
+    if (!referencePlan) return;
+
+    const status = String(referencePlan.status || "").toLowerCase();
+
     try {
-      if (String(plan.status).toLowerCase() === "active") {
-        await pausePlanMutation.mutateAsync(plan.id);
-        toast.success("Plan paused.");
+      if (status === "active") {
+        await pausePlanMutation.mutateAsync(referencePlan.id);
+        toast.success("Plan closed.");
       } else {
-        await resumePlanMutation.mutateAsync(plan.id);
-        toast.success("Plan resumed.");
+        await createPlanMutation.mutateAsync({
+          plan_type: formatPlanTypePayload(referencePlan.frequency),
+          amount: Number(referencePlan.monthlyAmount || 0),
+          target_amount: Number(referencePlan.totalTarget || 0),
+          duration: Number(referencePlan.durationMonths || 0),
+          duration_unit: referencePlan.durationUnit || planMetrics?.durationUnit,
+          duration_months: Number(referencePlan.durationMonths || 0),
+          start_date: new Date().toISOString().split("T")[0],
+        });
+        toast.success("New plan resumed from previous settings.");
       }
       await plansQuery.refetch();
     } catch (error) {
@@ -204,10 +225,10 @@ export default function PaymentPlan() {
   };
 
   const handleUpdateSettings = async (nextSettings) => {
-    if (!plan?.id) return;
+    if (!activePlan) return;
     try {
       await updateSettingsMutation.mutateAsync({
-        id: plan.id,
+        id: activePlan.id,
         payload: nextSettings,
       });
       toast.success("Plan settings updated.");
@@ -229,31 +250,34 @@ export default function PaymentPlan() {
     <div className="p-6 space-y-8">
       <PlanManagementHeader />
 
-      {!plan && (
+      {!activePlan && (
         <PlanEmptyState onCreatePlan={() => setOpenModalTick((value) => value + 1)} />
       )}
 
-      <CurrentPlan
-        plan={plan}
-        metrics={planMetrics}
-        onEditPlan={() => setOpenModalTick((value) => value + 1)}
-      />
-      {plan && <PlanProgress plan={plan} metrics={planMetrics} />}
+      {activePlan && (
+        <>
+          <CurrentPlan
+            plan={activePlan}
+            metrics={planMetrics}
+            onEditPlan={() => setOpenModalTick((value) => value + 1)}
+          />
+          <PlanProgress plan={activePlan} metrics={planMetrics} />
+          <UpcomingPayments upcoming={upcoming} />
+        </>
+      )}
 
-      <UpcomingPayments upcoming={upcoming} />
       <PaymentHistorySection history={history} />
 
       <PlanActions
-        key={`${plan?.id || "none"}-${openModalTick}`}
-        plan={plan}
+        key={`${planForMetrics?.id || "none"}-${openModalTick}`}
+        plan={planForMetrics}
         openModalTick={openModalTick}
         onSubmitPlan={handlePlanSubmit}
         onPauseResume={handlePauseResume}
         isSubmitting={
           createPlanMutation.isPending ||
           updatePlanMutation.isPending ||
-          pausePlanMutation.isPending ||
-          resumePlanMutation.isPending
+          pausePlanMutation.isPending
         }
       />
 

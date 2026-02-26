@@ -1,5 +1,4 @@
-import { FiCheckCircle, FiKey, FiMoreVertical, FiXCircle } from "react-icons/fi";
-import { isPendingCashDeposit } from "./userHelpers";
+import { FiMoreVertical, FiPlusCircle } from "react-icons/fi";
 
 export default function UserActionsMenu({
   user,
@@ -7,17 +6,8 @@ export default function UserActionsMenu({
   isOpen,
   onToggle,
   onViewDetails,
-  onViewDeposits,
-  isPending,
-  pendingDeposit,
-  pendingPaystack,
-  onApprove,
-  onReject,
-  onVerify,
-  onGenerateCode,
-  updating,
-  verifying,
-  generatingCode,
+  onRecordDeposit,
+  loading,
 }) {
   const menuPositionClass = align === "left" ? "left-0" : "right-0";
 
@@ -42,57 +32,13 @@ export default function UserActionsMenu({
           </button>
           <button
             type="button"
-            onClick={() => onViewDeposits(user)}
-            className="w-full text-left px-2.5 py-1.5 rounded-button text-xs text-neutral-700 hover:bg-neutral-50"
+            disabled={loading}
+            onClick={() => onRecordDeposit?.(user)}
+            className="w-full text-left px-2.5 py-1.5 rounded-button text-xs text-neutral-700 hover:bg-neutral-50 inline-flex items-center gap-1.5"
           >
-            View Deposits
+            <FiPlusCircle size={14} />
+            Record Deposit
           </button>
-
-          {isPending && pendingDeposit ? (
-            <>
-              <button
-                type="button"
-                disabled={updating}
-                onClick={() => onApprove(pendingDeposit)}
-                className="w-full text-left px-2.5 py-1.5 rounded-button text-xs bg-primary-500 text-white disabled:opacity-40 inline-flex items-center gap-1.5"
-              >
-                <FiCheckCircle size={14} />
-                Approve
-              </button>
-              <button
-                type="button"
-                disabled={updating}
-                onClick={() => onReject(pendingDeposit)}
-                className="w-full text-left px-2.5 py-1.5 rounded-button text-xs bg-red-500 text-white disabled:opacity-40 inline-flex items-center gap-1.5"
-              >
-                <FiXCircle size={14} />
-                Reject
-              </button>
-            </>
-          ) : null}
-
-          {pendingPaystack ? (
-            <button
-              type="button"
-              disabled={verifying}
-              onClick={() => onVerify(pendingPaystack)}
-              className="w-full text-left px-2.5 py-1.5 rounded-button text-xs bg-yellow-500 text-white disabled:opacity-40"
-            >
-              Verify
-            </button>
-          ) : null}
-
-          {isPending && pendingDeposit && isPendingCashDeposit(pendingDeposit) ? (
-            <button
-              type="button"
-              disabled={generatingCode}
-              onClick={() => onGenerateCode(pendingDeposit)}
-              className="w-full text-left px-2.5 py-1.5 rounded-button text-xs bg-indigo-500 text-white disabled:opacity-40 inline-flex items-center gap-1.5"
-            >
-              <FiKey size={14} />
-              Generate Code
-            </button>
-          ) : null}
         </div>
       ) : null}
     </div>

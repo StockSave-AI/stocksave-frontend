@@ -9,6 +9,8 @@ export default function AvailableFoodSection({
   isError,
   foodItems,
   onAddToCart,
+  userBalance = 0,
+  onLockedAction,
 }) {
   const filteredItems = foodItems.filter(
     (item) => selectedCategory === "All" || item.category === selectedCategory,
@@ -44,7 +46,13 @@ export default function AvailableFoodSection({
         {!isLoading && !isError ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-8 xl:gap-x-10">
             {filteredItems.map((item) => (
-              <FoodItemCard key={item.id} item={item} onAddToCart={onAddToCart} />
+              <FoodItemCard
+                key={item.id}
+                item={item}
+                onAddToCart={onAddToCart}
+                userBalance={userBalance}
+                onLockedAction={onLockedAction}
+              />
             ))}
           </div>
         ) : null}

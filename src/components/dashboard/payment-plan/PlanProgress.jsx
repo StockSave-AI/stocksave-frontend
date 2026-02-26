@@ -9,6 +9,8 @@ export default function PlanProgress({ plan, metrics }) {
   const savingsProgress = Number(metrics?.savingsProgressPercent || 0);
   const remainingPayments = Number(metrics?.remainingIntervals || 0);
   const intervalLabel = metrics?.intervalLabel || "months";
+  const remainingAmount = Math.max(0, totalTarget - totalSaved);
+  const overSavedAmount = Math.max(0, totalSaved - totalTarget);
   const missedPayments = Number(plan?.missedPayments || 0);
   const onTimePercentage =
     completedIntervals === 0
@@ -43,6 +45,14 @@ export default function PlanProgress({ plan, metrics }) {
           <p className="text-neutral-500">Total Saved</p>
           <p className="font-medium">
             {formatCurrency(totalSaved)} / {formatCurrency(totalTarget)}
+          </p>
+        </div>
+        <div className="flex justify-between text-xs text-neutral-500">
+          <p>{Math.round(savingsProgress)}% completed</p>
+          <p>
+            {overSavedAmount > 0
+              ? `Over-saving: ${formatCurrency(overSavedAmount)}`
+              : `Remaining: ${formatCurrency(remainingAmount)}`}
           </p>
         </div>
 

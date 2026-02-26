@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { FaCreditCard } from "react-icons/fa";
 import SectionCard from "./SectionCard";
 import AddBankAccount from "../redeem/AddBankAccount";
@@ -23,21 +23,25 @@ export default function PaymentMethodsSection() {
   const [accounts, setAccounts] = useState([]);
   const [editingAccount, setEditingAccount] = useState(null);
 
-  const fetchAccounts = useCallback(async () => {
-    if (!token) return;
-    try {
-      const response = await getBankAccounts(token);
-      const bankAccounts = normalizeBankAccounts(response);
-      setAccounts(bankAccounts);
-    } catch (error) {
-      console.error("Failed to fetch bank accounts:", error);
-      setAccounts([]);
-    }
-  }, [token]);
-
   useEffect(() => {
-    fetchAccounts();
-  }, [fetchAccounts]);
+    let isMounted = true;
+    if (!token) return undefined;
+
+    getBankAccounts(token)
+      .then((response) => {
+        if (!isMounted) return;
+        setAccounts(normalizeBankAccounts(response));
+      })
+      .catch((error) => {
+        if (!isMounted) return;
+        console.error("Failed to fetch bank accounts:", error);
+        setAccounts([]);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
 
   const handleEdit = (index) => {
     setEditingAccount(index);

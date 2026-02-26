@@ -3,7 +3,7 @@ import DangerZoneSection from "./DangerSection";
 import HelpSupportSection from "./HelpSupportSection";
 import NotificationSection from "./NotificationSection";
 import PaymentMethodsSection from "./PaymentMethodsSection";
-import PinSection from "./PinSection";
+
 import ProfileSection from "./ProfileSection";
 import SecuritySection from "./SecutitySection";
 import SettingsHeader from "./SettingsHeader";
@@ -15,7 +15,6 @@ export default function Settings() {
 
       <ProfileSection />
       <SecuritySection />
-      <PinSection />
       <NotificationSection />
       <PaymentMethodsSection />
       <AccountSettingsSection />

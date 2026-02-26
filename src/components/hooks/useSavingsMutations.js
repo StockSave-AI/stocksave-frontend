@@ -9,15 +9,25 @@ import {
   updateSavingsStatus,
 } from "../services/savings";
 
-const invalidateSavingsQueries = (queryClient) => {
-  return Promise.all([
+const invalidateSavingsQueries = (
+  queryClient,
+  { includeOwnerRecentCash = true } = {},
+) => {
+  const queries = [
     queryClient.invalidateQueries({ queryKey: ["customer-summary"] }),
     queryClient.invalidateQueries({ queryKey: ["recent-savings"] }),
     queryClient.invalidateQueries({ queryKey: ["savings-history"] }),
     queryClient.invalidateQueries({ queryKey: ["plans"] }),
-    queryClient.invalidateQueries({ queryKey: ["owner-recent-cash"] }),
     queryClient.invalidateQueries({ queryKey: ["owner-stats"] }),
-  ]);
+    queryClient.invalidateQueries({ queryKey: ["customer-notifications"] }),
+    queryClient.invalidateQueries({ queryKey: ["customer-notifications-unread"] }),
+  ];
+
+  if (includeOwnerRecentCash) {
+    queries.push(queryClient.invalidateQueries({ queryKey: ["owner-recent-cash"] }));
+  }
+
+  return Promise.all(queries);
 };
 
 export const useSavingsDeposit = () => {
@@ -65,7 +75,10 @@ export const useSavingsStatusUpdate = () => {
         });
       });
 
-      await invalidateSavingsQueries(queryClient);
+      const skipRecentCashInvalidation = Boolean(variables?.skipRecentCashInvalidation);
+      await invalidateSavingsQueries(queryClient, {
+        includeOwnerRecentCash: !skipRecentCashInvalidation,
+      });
       await Promise.all([
         queryClient.refetchQueries({ queryKey: ["owner-stats"], type: "active" }),
         queryClient.refetchQueries({ queryKey: ["customer-summary"], type: "active" }),

@@ -12,11 +12,7 @@ export const addDeposit = async ({ amount, method, reference }) => {
 };
 
 export const getStockBoardData = async () => {
-  const tryEndpoints = [
-    "/api/inventory/products",
-    "/api/inventory/categories",
-    "/api/inventory",
-  ];
+  const tryEndpoints = ["/api/inventory/categories", "/api/inventory"];
 
   for (const endpoint of tryEndpoints) {
     try {
@@ -39,35 +35,34 @@ export const getStockBoardData = async () => {
 };
 
 export const getFoodItems = async () => {
-  const tryEndpoints = [
-    "/api/inventory",
-    "/api/inventory/categories",
-    "/api/inventory/products",
-  ];
+  try {
+    return apiClient("/api/inventory/categories");
+  } catch {
+    const tryEndpoints = ["/api/inventory"];
 
-  for (const endpoint of tryEndpoints) {
-    try {
-      const response = await apiClient(endpoint);
-      const payload = response?.data || response;
-      const nested = payload?.data || {};
-      const hasItems =
-        (Array.isArray(payload) && payload.length > 0) ||
-        (Array.isArray(payload?.items) && payload.items.length > 0) ||
-        (Array.isArray(payload?.inventory) && payload.inventory.length > 0) ||
-        (Array.isArray(payload?.products) && payload.products.length > 0) ||
-        (Array.isArray(payload?.categories) && payload.categories.length > 0) ||
-        (Array.isArray(nested?.items) && nested.items.length > 0) ||
-        (Array.isArray(nested?.inventory) && nested.inventory.length > 0) ||
-        (Array.isArray(nested?.products) && nested.products.length > 0) ||
-        (Array.isArray(nested?.categories) && nested.categories.length > 0);
+    for (const endpoint of tryEndpoints) {
+      try {
+        const response = await apiClient(endpoint);
+        const payload = response?.data || response;
+        const nested = payload?.data || {};
+        const hasItems =
+          (Array.isArray(payload) && payload.length > 0) ||
+          (Array.isArray(payload?.items) && payload.items.length > 0) ||
+          (Array.isArray(payload?.inventory) && payload.inventory.length > 0) ||
+          (Array.isArray(payload?.products) && payload.products.length > 0) ||
+          (Array.isArray(payload?.categories) &&
+            payload.categories.length > 0) ||
+          (Array.isArray(nested?.items) && nested.items.length > 0) ||
+          (Array.isArray(nested?.inventory) && nested.inventory.length > 0) ||
+          (Array.isArray(nested?.products) && nested.products.length > 0) ||
+          (Array.isArray(nested?.categories) && nested.categories.length > 0);
 
-      if (hasItems) return response;
-    } catch {
-      // Try next endpoint.
+        if (hasItems) return response;
+      } catch {}
     }
-  }
 
-  return { data: [] };
+    return { data: [] };
+  }
 };
 
 export const getMyBookings = async () => {
@@ -91,6 +86,5 @@ export const getBankAccounts = async () => {
 
 export const getNotificationPreferences = async () => {
   await apiClient("/api/customer/summary");
-  // TODO: Notification preference fields are not documented in current API contract.
   return { data: {} };
 };

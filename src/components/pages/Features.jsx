@@ -1,12 +1,19 @@
+import AdvancedSection from "../layout/AdvancedSection";
+import FeatureGrid from "../layout/FeatureGrid";
+import FeaturesHero from "../layout/FeaturesHero";
 import Navbar from "../layout/Navbar";
 
-function Features() {
+export default function Features() {
   return (
     <>
       <Navbar />
-      <div className="bg-red-500 p-4 text-white">Featuress</div>
+      <main className="bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FeaturesHero />
+          <FeatureGrid />
+          <AdvancedSection />
+        </div>
+      </main>
     </>
   );
 }
-
-export default Features;

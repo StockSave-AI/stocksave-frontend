@@ -11,6 +11,9 @@ export const useWithdraw = () => {
       queryClient.invalidateQueries({ queryKey: ["customer-summary"] });
       queryClient.invalidateQueries({ queryKey: ["recent-savings"] });
       queryClient.invalidateQueries({ queryKey: ["savings-history"] });
+      queryClient.invalidateQueries({ queryKey: ["savings-balance"] });
+      queryClient.invalidateQueries({ queryKey: ["savings-redeem"] });
+      queryClient.invalidateQueries({ queryKey: ["owner-withdrawals"] });
       queryClient.invalidateQueries({ queryKey: ["plans"] });
     },
     onError: (error) => {

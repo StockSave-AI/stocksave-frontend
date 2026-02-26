@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FiPauseCircle, FiEdit3, FiCreditCard } from "react-icons/fi";
 import EditPlanModal from "./EditPlanModal";
 import { useNavigate } from "react-router-dom";
@@ -11,14 +11,13 @@ export default function PlanActions({
   isSubmitting,
 }) {
   const navigate = useNavigate();
-  const [showEditModal, setShowEditModal] = useState(openModalTick > 0);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [dismissedTick, setDismissedTick] = useState(0);
   const mode = plan ? "update" : "create";
+  const isModalOpen = showEditModal || openModalTick > dismissedTick;
 
-  useEffect(() => {
-    if (openModalTick > 0) {
-      setShowEditModal(true);
-    }
-  }, [openModalTick]);
+  const normalizedStatus = String(plan?.status || "").toLowerCase();
+  const isActive = normalizedStatus === "active";
 
   return (
     <>
@@ -30,12 +29,14 @@ export default function PlanActions({
         >
           <FiPauseCircle size={28} />
           <div>
-            <p className="font-semibold">
-              {String(plan?.status).toLowerCase() === "active"
-                ? "Pause Plan"
-                : "Resume Plan"}
-            </p>
-            <p className="text-sm">Temporarily stop payments</p>
+          <p className="font-semibold">
+            {isActive ? "Pause Plan" : "Resume Plan"}
+          </p>
+          <p className="text-sm">
+            {isActive
+              ? "Temporarily pause contributions"
+              : "Start a new plan from these settings"}
+          </p>
           </div>
         </button>
 
@@ -69,11 +70,14 @@ export default function PlanActions({
         </button>
       </div>
 
-      {showEditModal && (
+      {isModalOpen && (
         <EditPlanModal
           mode={mode}
           plan={plan}
-          onClose={() => setShowEditModal(false)}
+          onClose={() => {
+            setShowEditModal(false);
+            setDismissedTick(openModalTick);
+          }}
           isSubmitting={isSubmitting}
           onSubmit={async (payload) => {
             const didSave = await onSubmitPlan({ mode, payload });
