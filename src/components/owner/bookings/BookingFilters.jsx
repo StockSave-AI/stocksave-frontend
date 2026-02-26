@@ -4,7 +4,7 @@ const tabs = ["All", "Pending", "Completed", "Cancelled"];
 
 const BookingFilters = ({ search, onSearchChange, status, onStatusChange }) => {
   return (
-    <div className="bg-white p-4 rounded-card border border-neutral-100 shadow-sm flex flex-col lg:flex-row gap-4 items-center">
+    <div className="bg-white p-3 md:p-4 rounded-card border border-neutral-100 shadow-sm flex flex-col lg:flex-row gap-3 md:gap-4 items-stretch">
       <div className="relative w-full lg:w-1/4">
         <FiSearch
           className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
@@ -19,12 +19,12 @@ const BookingFilters = ({ search, onSearchChange, status, onStatusChange }) => {
         />
       </div>
 
-      <div className="w-full lg:w-3/4 grid grid-cols-5 gap-2">
+      <div className="w-full lg:w-3/4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
         {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => onStatusChange(tab)}
-            className={`py-2 text-sm font-medium rounded-button transition-colors ${
+            className={`py-2 px-2 text-xs sm:text-sm font-medium rounded-button transition-colors whitespace-nowrap ${
               status === tab
                 ? "bg-primary-500 text-white"
                 : "bg-neutral-100 text-neutral-600 hover:bg-primary-400 hover:text-white"

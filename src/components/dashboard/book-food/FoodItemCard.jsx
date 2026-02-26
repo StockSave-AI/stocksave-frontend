@@ -27,21 +27,16 @@ const FoodItemCard = ({ item, onAddToCart, userBalance, onLockedAction }) => {
     <div
       className={`relative w-full max-w-sm mx-auto rounded-2xl transition duration-300 overflow-hidden border ${
         isLocked
-          ? "bg-neutral-50 border-neutral-200 cursor-not-allowed"
+          ? "bg-white border-neutral-200 cursor-not-allowed"
           : "bg-white border-neutral-200 shadow-sm hover:shadow-lg hover:-translate-y-1"
       }`}
     >
-      {isLocked ? (
-        <div className="absolute inset-0 bg-neutral-100/45 backdrop-blur-[2px] pointer-events-none z-0" />
-      ) : null}
       <div className="h-48 w-full overflow-hidden">
         {item.image ? (
           <img
             src={item.image}
             alt={item.name}
-            className={`w-full h-full object-cover transition ${
-              isLocked ? "grayscale blur-[1px] brightness-95" : ""
-            }`}
+            className="w-full h-full object-cover transition"
           />
         ) : (
           <div className="w-full h-full bg-neutral-100 flex items-center justify-center text-neutral-400">

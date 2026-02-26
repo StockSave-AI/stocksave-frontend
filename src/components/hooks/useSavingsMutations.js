@@ -49,7 +49,7 @@ export const useSavingsStatusUpdate = () => {
       const targetId = Number(variables?.transactionId ?? variables?.depositId);
       const nextStatus = variables?.status ?? variables?.nextStatus ?? "Completed";
 
-      queryClient.setQueryData(["owner-recent-cash"], (previous) => {
+      queryClient.setQueriesData({ queryKey: ["owner-recent-cash"] }, (previous) => {
         const source = previous?.data ?? previous;
         if (!Array.isArray(source)) return previous;
         const updated = source.map((item) =>

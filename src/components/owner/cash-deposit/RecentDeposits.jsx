@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { FaNairaSign } from "react-icons/fa6";
 import { formatCurrency } from "../../../utils/currency";
-import { formatDisplayDate } from "../../../utils/date";
 
 const toDisplayName = (item) => {
   const fullName = `${item?.first_name || ""} ${item?.last_name || ""}`.trim();
@@ -25,8 +24,23 @@ const statusStyle = (status) => {
 const normalizeStatus = (value) => {
   const normalized = String(value || "").trim().toLowerCase();
   if (normalized === "complete") return "completed";
-  if (normalized === "canceled") return "cancelled";
+  if (normalized === "rejected") return "failed";
+  if (normalized === "cancelled") return "failed";
+  if (normalized === "canceled") return "failed";
   return normalized || "pending";
+};
+
+const formatDateTime = (value) => {
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return String(value);
+  return parsed.toLocaleString("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
 const RecentDeposits = ({
@@ -58,7 +72,7 @@ const RecentDeposits = ({
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <h3 className="text-neutral-800 font-semibold">Recent Cash Deposits</h3>
         <div className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 p-1">
-          {["all", "pending", "completed"].map((filter) => {
+          {["all", "pending", "completed", "failed"].map((filter) => {
             const active = statusFilter === filter;
             return (
               <button
@@ -100,43 +114,64 @@ const RecentDeposits = ({
       ) : null}
 
       {!isLoading && !isError && filteredDeposits.length > 0 ? (
-        <div className="divide-y divide-neutral-100">
+        <div className="space-y-3">
           {paginatedDeposits.map((item, idx) => {
             const status = toStatusLabel(item?.status);
             const isPending = String(item?.status || "").toLowerCase() === "pending";
 
             return (
-              <div key={item?.id || idx} className="flex justify-between items-center py-4 gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-secondary-100 rounded-lg flex items-center justify-center">
-                    <FaNairaSign />
+              <div
+                key={item?.id || idx}
+                className="border border-neutral-100 rounded-xl p-3 md:p-4 bg-neutral-50/40"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="w-10 h-10 shrink-0 bg-secondary-100 rounded-lg flex items-center justify-center">
+                      <FaNairaSign className="text-secondary-700" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-neutral-900 truncate">
+                        {toDisplayName(item)}
+                      </p>
+                      <p className="text-xs text-neutral-500 truncate">
+                        {item?.phone || "No phone"}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-neutral-900">{toDisplayName(item)}</p>
-                    <p className="text-xs text-neutral-400">
-                      {formatDisplayDate(item?.created_at || item?.date, "-")}
+                  <div className="text-right shrink-0">
+                    <p className="font-bold text-secondary-500">
+                      {formatCurrency(Number(item?.amount || 0))}
                     </p>
+                    <span
+                      className={`inline-flex mt-1 text-[11px] px-2 py-1 rounded-full ${statusStyle(
+                        status,
+                      )}`}
+                    >
+                      {status}
+                    </span>
                   </div>
                 </div>
 
-                <div className="text-right space-y-1">
-                  <p className="font-bold text-secondary-500">
-                    {formatCurrency(Number(item?.amount || 0))}
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <p className="text-neutral-400 break-all">
+                    <span className="text-neutral-500 font-medium">Ref:</span>{" "}
+                    {item?.reference || "-"}
                   </p>
-                  <span className={`text-[11px] px-2 py-1 rounded-full ${statusStyle(status)}`}>
-                    {status}
-                  </span>
+                  <p className="text-neutral-400 sm:text-right">
+                    {formatDateTime(item?.created_at || item?.date)}
+                  </p>
+                </div>
+
+                <div className="mt-3 flex items-center justify-end">
                   {isPending ? (
-                    <div className="flex items-center justify-end">
-                      <button
-                        type="button"
-                        disabled={isUpdating}
-                        onClick={() => onMarkCompleted?.(item)}
-                        className="text-xs font-semibold text-primary-600 hover:text-primary-700 disabled:opacity-50"
-                      >
-                        Mark Completed
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      disabled={isUpdating}
+                      onClick={() => onMarkCompleted?.(item)}
+                      className="w-full sm:w-auto text-xs font-semibold text-primary-600 border border-primary-200 bg-primary-50 px-3 py-2 rounded-button hover:bg-primary-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Mark Completed
+                    </button>
                   ) : null}
                 </div>
               </div>

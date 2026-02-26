@@ -13,6 +13,7 @@ import {
   useOwnerRecentCash,
   useOwnerRecordDeposit,
   useOwnerSearchUsers,
+  useOwnerTransactions,
   useOwnerUserDetail,
 } from "../hooks/useOwnerData";
 import {
@@ -36,9 +37,25 @@ const CashDeposit = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(prefillUser);
   const [optimisticBalanceByUser, setOptimisticBalanceByUser] = useState({});
   const [statusOverrides, setStatusOverrides] = useState({});
-  const [archivedCompletedById, setArchivedCompletedById] = useState({});
   const quickAmounts = [1000, 2000, 5000, 10000];
-  const recentCashQuery = useOwnerRecentCash();
+  const RECENT_CASH_LIMIT = 500;
+  const recentCashPendingQuery = useOwnerRecentCash({
+    status: "Pending",
+    limit: RECENT_CASH_LIMIT,
+  });
+  const recentCashCompletedQuery = useOwnerRecentCash({
+    status: "Completed",
+    limit: RECENT_CASH_LIMIT,
+  });
+  const recentCashFailedQuery = useOwnerRecentCash({
+    status: "Failed",
+    limit: RECENT_CASH_LIMIT,
+  });
+  const ownerCashTransactionsQuery = useOwnerTransactions({
+    type: "Deposit",
+    method: "Cash",
+    limit: RECENT_CASH_LIMIT,
+  });
   const searchUsersQuery = useOwnerSearchUsers({ q: searchTerm.trim() });
   const selectedUserDetailQuery = useOwnerUserDetail(
     selectedCustomer?.id,
@@ -47,15 +64,67 @@ const CashDeposit = () => {
   const updateStatusMutation = useSavingsStatusUpdate();
   const recordDepositMutation = useOwnerRecordDeposit();
 
-  const recentDepositsRaw = useMemo(
-    () =>
-      Array.isArray(recentCashQuery.data?.data)
-        ? recentCashQuery.data.data
-        : Array.isArray(recentCashQuery.data)
-          ? recentCashQuery.data
-          : [],
-    [recentCashQuery.data],
-  );
+  const recentDepositsRaw = useMemo(() => {
+    const extractRecentCash = (payload) =>
+      Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload)
+          ? payload
+          : [];
+    const extractOwnerTransactions = (payload) => {
+      const rows = Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.transactions)
+          ? payload.transactions
+          : Array.isArray(payload)
+            ? payload
+            : [];
+
+      return rows
+        .filter((item) => String(item?.method || "").toLowerCase() === "cash")
+        .filter((item) => String(item?.type || "").toLowerCase() === "deposit")
+        .map((item) => ({
+          id: item?.id ?? item?.transaction_id,
+          amount: item?.amount,
+          status: item?.status,
+          reference: item?.reference,
+          created_at: item?.created_at,
+          user_id: item?.user_id ?? item?.customer_id ?? item?.userId,
+          first_name: item?.first_name ?? item?.customer_first_name ?? "",
+          last_name: item?.last_name ?? item?.customer_last_name ?? "",
+          phone: item?.phone ?? item?.customer_phone ?? "",
+        }));
+    };
+
+    const merged = [
+      ...extractOwnerTransactions(ownerCashTransactionsQuery.data),
+      ...extractRecentCash(recentCashPendingQuery.data),
+      ...extractRecentCash(recentCashCompletedQuery.data),
+      ...extractRecentCash(recentCashFailedQuery.data),
+    ];
+
+    const byId = new Map();
+    merged.forEach((item) => {
+      const key = String(item?.id ?? "");
+      if (!key) return;
+      const previous = byId.get(key);
+      if (!previous) {
+        byId.set(key, item);
+        return;
+      }
+      byId.set(key, {
+        ...previous,
+        ...item,
+      });
+    });
+
+    return Array.from(byId.values());
+  }, [
+    ownerCashTransactionsQuery.data,
+    recentCashCompletedQuery.data,
+    recentCashFailedQuery.data,
+    recentCashPendingQuery.data,
+  ]);
 
   const localUsers = useMemo(() => buildLocalUsers(recentDepositsRaw), [recentDepositsRaw]);
 
@@ -103,22 +172,17 @@ const CashDeposit = () => {
 
   const showDepositSection = step !== "success";
   const recentDeposits = useMemo(() => {
-    const normalizedFromApi = recentDepositsRaw.map((item) => ({
+    return recentDepositsRaw
+      .map((item) => ({
       ...item,
       status: statusOverrides[String(item?.id)] || item.status || "Pending",
-    }));
-    const apiIds = new Set(
-      normalizedFromApi.map((item) => String(item?.id)).filter(Boolean),
-    );
-    const archivedOnly = Object.values(archivedCompletedById).filter(
-      (item) => !apiIds.has(String(item?.id)),
-    );
-    return [...normalizedFromApi, ...archivedOnly].sort((a, b) => {
+    }))
+      .sort((a, b) => {
       const aTime = new Date(a?.created_at || a?.date || 0).getTime();
       const bTime = new Date(b?.created_at || b?.date || 0).getTime();
       return bTime - aTime;
     });
-  }, [archivedCompletedById, recentDepositsRaw, statusOverrides]);
+  }, [recentDepositsRaw, statusOverrides]);
 
   const handleMarkCompleted = async (item) => {
     try {
@@ -128,11 +192,7 @@ const CashDeposit = () => {
         skipRecentCashInvalidation: true,
       });
       setStatusOverrides((prev) => ({ ...prev, [String(item?.id)]: "Completed" }));
-      setArchivedCompletedById((prev) => ({
-        ...prev,
-        [String(item?.id)]: { ...item, status: "Completed" },
-      }));
-      queryClient.setQueryData(["owner-recent-cash"], (previous) => {
+      queryClient.setQueriesData({ queryKey: ["owner-recent-cash"] }, (previous) => {
         const source = previous?.data ?? previous;
         if (!Array.isArray(source)) return previous;
         const updated = source.map((entry) =>
@@ -141,6 +201,19 @@ const CashDeposit = () => {
             : entry,
         );
         return previous?.data ? { ...previous, data: updated } : updated;
+      });
+      queryClient.setQueriesData({ queryKey: ["owner-transactions"] }, (previous) => {
+        const source = previous?.data ?? previous?.transactions ?? previous;
+        if (!Array.isArray(source)) return previous;
+        const updated = source.map((entry) =>
+          Number(entry?.id ?? entry?.transaction_id) === Number(item?.id)
+            ? { ...entry, status: "Completed" }
+            : entry,
+        );
+        if (Array.isArray(previous?.data)) return { ...previous, data: updated };
+        if (Array.isArray(previous?.transactions))
+          return { ...previous, transactions: updated };
+        return updated;
       });
       resolveCustomerNotificationEntity({
         targetUserId:
@@ -240,8 +313,18 @@ const CashDeposit = () => {
 
         <RecentDeposits
           deposits={recentDeposits}
-          isLoading={recentCashQuery.isLoading}
-          isError={recentCashQuery.isError}
+          isLoading={
+            ownerCashTransactionsQuery.isLoading ||
+            recentCashPendingQuery.isLoading ||
+            recentCashCompletedQuery.isLoading ||
+            recentCashFailedQuery.isLoading
+          }
+          isError={
+            ownerCashTransactionsQuery.isError &&
+            recentCashPendingQuery.isError &&
+            recentCashCompletedQuery.isError &&
+            recentCashFailedQuery.isError
+          }
           onMarkCompleted={handleMarkCompleted}
           isUpdating={updateStatusMutation.isPending}
         />
@@ -251,6 +334,7 @@ const CashDeposit = () => {
           onClose={() => setStep("idle")}
           onConfirm={handleSubmitDeposit}
           data={depositData}
+          isSubmitting={recordDepositMutation.isPending}
         />
 
         <DepositSuccessModal

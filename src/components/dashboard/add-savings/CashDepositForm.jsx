@@ -81,7 +81,7 @@ export default function CashDepositForm({ quickAmounts = [], steps = [] }) {
           ))}
         </div>
         <div className="space-y-1">
-          <label className="text-sm text-neutral-600">Custom Amount</label>
+          <label className="text-sm text-neutral-600">Input Amount</label>
           <input
             type="number"
             placeholder="₦ 0.00"

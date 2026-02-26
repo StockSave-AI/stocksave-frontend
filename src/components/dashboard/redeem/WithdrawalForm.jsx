@@ -52,7 +52,8 @@ export default function WithdrawalForm({
   accountsError,
 }) {
   const selectedAmountNumber = Number(selectedAmount || 0);
-  const canSubmit = Boolean(method) && selectedAmountNumber > 0 && !isSubmitting;
+  const canSubmit =
+    Boolean(method) && selectedAmountNumber > 0 && !isSubmitting;
   const hasCustomValue = selectedAmount !== null && selectedAmount !== "";
 
   return (
@@ -112,7 +113,7 @@ export default function WithdrawalForm({
             />
           ))}
         </div>
-        <p className="text-xs text-neutral-500 mb-2">Custom Amount</p>
+        <p className="text-xs text-neutral-500 mb-2">Input Amount</p>
 
         <div className="relative mb-4">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400">
@@ -188,7 +189,8 @@ export default function WithdrawalForm({
                 </div>
                 <div>
                   <p className="font-bold text-sm">
-                    **** **** **** {String(account.accountNumber || "").slice(-4)}
+                    **** **** ****{" "}
+                    {String(account.accountNumber || "").slice(-4)}
                   </p>
                   <p className="text-xs text-neutral-500">
                     {account.accountName}

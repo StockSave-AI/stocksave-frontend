@@ -7,11 +7,11 @@ export default function NotificationFilters() {
     "Unread",
   ];
   return (
-    <div className="flex gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
       {categories.map((cat) => (
         <button
           key={cat}
-          className="px-4 py-2 border border-neutral-300 rounded-button text-neutral-500"
+          className="px-3 py-2 border border-neutral-300 rounded-button text-neutral-500 text-xs sm:text-sm whitespace-nowrap"
         >
           {cat}
         </button>

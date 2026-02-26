@@ -16,12 +16,12 @@ export default function NotificationSettings() {
   ];
 
   return (
-    <div className="space-y-2 p-4 border border-neutral-200 rounded-card">
+    <div className="space-y-2 p-3 sm:p-4 border border-neutral-200 rounded-card">
       {settings.map((s) => (
-        <div key={s.label} className="flex justify-between items-center">
-          <div>
+        <div key={s.label} className="flex items-start sm:items-center justify-between gap-3">
+          <div className="min-w-0">
             <p className="font-semibold">{s.label}</p>
-            <p className="text-neutral-400 text-sm">{s.desc}</p>
+            <p className="text-neutral-400 text-sm break-words">{s.desc}</p>
           </div>
           <ToggleSwitch />
         </div>

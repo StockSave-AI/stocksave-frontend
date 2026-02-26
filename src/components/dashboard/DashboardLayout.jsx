@@ -1,12 +1,17 @@
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
-import { useState, Suspense } from "react";
-import { Outlet } from "react-router-dom";
+import { useEffect, useState, Suspense } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import Loader from "../ui/Loader";
 
 function DashboardLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const location = useLocation();
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
 
   return (
     <div className="h-screen bg-neutral-100 overflow-hidden">

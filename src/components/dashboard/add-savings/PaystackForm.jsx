@@ -21,7 +21,11 @@ export default function PaystackForm({
       const parsed = new URL(value);
       const host = parsed.hostname.toLowerCase();
       const path = `${parsed.pathname}${parsed.hash}`.toLowerCase();
-      return host.includes("paystack") && !path.includes("api-docs") && !path.includes("swagger");
+      return (
+        host.includes("paystack") &&
+        !path.includes("api-docs") &&
+        !path.includes("swagger")
+      );
     } catch {
       return false;
     }
@@ -41,12 +45,15 @@ export default function PaystackForm({
       },
       {
         onSuccess: (response) => {
-          const paymentUrl = response?.payment_url || response?.data?.payment_url;
+          const paymentUrl =
+            response?.payment_url || response?.data?.payment_url;
           if (isValidPaystackUrl(paymentUrl)) {
             window.location.assign(paymentUrl);
             return;
           }
-          toast.error("Invalid payment link returned. Redirecting to dashboard.");
+          toast.error(
+            "Invalid payment link returned. Redirecting to dashboard.",
+          );
           navigate("/dashboard", { replace: true });
         },
       },
@@ -92,7 +99,7 @@ export default function PaystackForm({
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm text-neutral-600">Custom Amount</label>
+          <label className="text-sm text-neutral-600">Input Amount</label>
           <input
             type="number"
             placeholder="₦ 0.00"
@@ -126,4 +133,3 @@ export default function PaystackForm({
     </div>
   );
 }
-

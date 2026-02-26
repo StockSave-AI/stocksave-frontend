@@ -20,10 +20,10 @@ export const useOwnerStats = () =>
     queryFn: fetchOwnerStats,
   });
 
-export const useOwnerRecentCash = () =>
+export const useOwnerRecentCash = (params = {}) =>
   useQuery({
-    queryKey: ["owner-recent-cash"],
-    queryFn: fetchOwnerRecentCash,
+    queryKey: ["owner-recent-cash", params],
+    queryFn: () => fetchOwnerRecentCash(params),
   });
 
 export const useOwnerAllBookings = () =>
