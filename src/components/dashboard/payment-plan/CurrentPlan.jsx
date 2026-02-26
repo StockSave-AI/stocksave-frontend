@@ -6,16 +6,19 @@ export default function CurrentPlan({ plan, metrics, onEditPlan }) {
 
   const duration = Number(metrics?.durationUnits || plan.durationMonths || 0);
   const durationUnit = String(
-    plan?.durationUnit || metrics?.durationUnit || metrics?.intervalLabel || "months",
+    plan?.durationUnit ||
+      metrics?.durationUnit ||
+      metrics?.intervalLabel ||
+      "months",
   ).toLowerCase();
   const endDate = metrics?.endDate || plan.endDate;
   const nextPayment = metrics?.nextPayment || plan.nextPayment;
   const amount = metrics?.amountPerInterval ?? plan.monthlyAmount;
 
   return (
-    <div className="bg-white shadow-card rounded-card p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
+    <div className="bg-white shadow-card rounded-card p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <h2 className="text-h3">Current Plan</h2>
           {String(plan.status).toLowerCase() === "active" && (
             <span className="text-xs font-medium text-success bg-success/10 px-3 py-1 rounded-full">
@@ -31,23 +34,17 @@ export default function CurrentPlan({ plan, metrics, onEditPlan }) {
 
         <button
           onClick={onEditPlan}
-          className="flex items-center gap-2 bg-secondary-100 text-secondary-700 px-4 py-2 rounded-button hover:bg-secondary-200 transition"
+          className="hidden sm:inline-flex sm:w-auto items-center justify-center gap-2 bg-secondary-100 text-secondary-700 px-4 py-2 rounded-button hover:bg-secondary-200 transition"
         >
           <FaEdit className="text-sm" />
           <span>Edit Plan</span>
         </button>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6 text-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 text-sm">
         <Detail label="Frequency" value={plan.frequency || "-"} />
-        <Detail
-          label="Amount"
-          value={formatCurrency(amount)}
-        />
-        <Detail
-          label="Duration"
-          value={`${duration} ${durationUnit}`}
-        />
+        <Detail label="Amount" value={formatCurrency(amount)} />
+        <Detail label="Duration" value={`${duration} ${durationUnit}`} />
         <Detail
           label="Start Date"
           value={plan.startDate ? formatDisplayDate(plan.startDate) : "-"}

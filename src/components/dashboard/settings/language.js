@@ -13,7 +13,7 @@ export const translations = {
     collectCash: "Collect cash at our location",
     processing1to2: "Processing: 1–2 business days",
     withdrawalAmount: "Withdrawal Amount",
-    customAmount: "Custom Amount",
+    customAmount: "Input Amount",
     youWillReceive: "You will receive:",
     noBankAccount: "No bank account added yet.",
     addNewBank: "+ Add New Bank Account",

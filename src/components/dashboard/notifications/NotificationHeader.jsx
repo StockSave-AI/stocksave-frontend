@@ -6,16 +6,16 @@ export default function NotificationHeader({
 }) {
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <h2 className="text-h2 font-semibold">Notifications</h2>
         <button
           onClick={onMarkAllRead}
-          className="px-4 py-2 border border-neutral-300 rounded-button"
+          className="w-full sm:w-auto px-4 py-2 border border-neutral-300 rounded-button"
         >
           Mark All Read
         </button>
       </div>
-      <div className="flex gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {[
           { title: "Unread", value: unreadCount },
           { title: "This Week", value: weekCount },

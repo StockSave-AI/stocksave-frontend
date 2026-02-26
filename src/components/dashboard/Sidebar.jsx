@@ -77,6 +77,7 @@ function Sidebar({ isOpen, setIsOpen }) {
               key={link.to}
               to={link.to}
               end
+              onClick={() => setIsOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 md:px-3 py-3 md:py-2.5 rounded-lg text-sm font-medium transition ${
                   isActive

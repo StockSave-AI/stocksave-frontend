@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import ActionButton from "../ui/ActionButton";
 import BottomLink from "../ui/BottomLink";
@@ -126,9 +126,9 @@ function Signup() {
               <input type="checkbox" {...register("terms")} className="mt-1" />
               <span>
                 I agree to the{" "}
-                <span className="text-primary-600 cursor-pointer">
+                <Link to="/terms" className="text-primary-600 cursor-pointer underline">
                   Terms of Service
-                </span>{" "}
+                </Link>{" "}
                 and{" "}
                 <span className="text-primary-600 cursor-pointer">
                   Privacy Policy

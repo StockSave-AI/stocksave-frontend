@@ -37,8 +37,13 @@ export const fetchOwnerSearchUsers = ({
   return apiClient(`${OWNER_BASE}/search-users${query ? `?${query}` : ""}`);
 };
 
-export const fetchOwnerRecentCash = () =>
-  apiClient(`${OWNER_BASE}/recent-cash`);
+export const fetchOwnerRecentCash = ({ status = "", limit } = {}) => {
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  if (limit) params.set("limit", String(limit));
+  const query = params.toString();
+  return apiClient(`${OWNER_BASE}/recent-cash${query ? `?${query}` : ""}`);
+};
 
 export const recordOwnerDeposit = ({ userId, amount, reference }) =>
   apiClient(`${OWNER_BASE}/record-deposit`, {

@@ -48,3 +48,25 @@ export const deleteAccount = async () => {
     method: "DELETE",
   });
 };
+
+export const updateOwnerSettings = async (payload) => {
+  const body = Object.entries(payload || {}).reduce((acc, [key, value]) => {
+    acc[key] = value === undefined ? null : value;
+    return acc;
+  }, {});
+
+  return apiClient("/api/auth/update-settings", {
+    method: "PUT",
+    body,
+  });
+};
+
+export const changePassword = async (payload) => {
+  return apiClient("/api/settings/change-password", {
+    method: "PATCH",
+    body: {
+      current_password: payload?.current_password ?? "",
+      new_password: payload?.new_password ?? "",
+    },
+  });
+};

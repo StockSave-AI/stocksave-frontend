@@ -1,5 +1,5 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Suspense, useState } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Suspense, useEffect, useState } from "react";
 import {
   FiBell,
   FiCreditCard,
@@ -33,6 +33,11 @@ export default function OwnerDashboardLayout() {
   const [isOpen, setIsOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     clearAuthToken();
@@ -69,6 +74,7 @@ export default function OwnerDashboardLayout() {
                   key={link.to}
                   to={link.to}
                   end
+                  onClick={() => setIsOpen(false)}
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-4 md:px-3 py-3 md:py-2.5 rounded-lg text-sm font-medium transition ${
                       isActive

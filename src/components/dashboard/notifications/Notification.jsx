@@ -19,7 +19,7 @@ export default function Notifications() {
   const totalCount = notifications.length;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 sm:p-6 space-y-5 sm:space-y-6 overflow-x-hidden">
       <NotificationHeader
         onMarkAllRead={markAllRead}
         unreadCount={unreadCount}
@@ -44,7 +44,7 @@ export default function Notifications() {
       <NotificationSettings />
       <button
         onClick={loadMore}
-        className="w-full py-3 border border-neutral-300 rounded-button text-neutral-500"
+        className="w-full py-3 border border-neutral-300 rounded-button text-neutral-500 text-sm sm:text-base"
       >
         Load More Notifications
       </button>

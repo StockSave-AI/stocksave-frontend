@@ -44,6 +44,7 @@ const Contact = lazy(() => import("./components/pages/Contact"));
 const Login = lazy(() => import("./components/pages/Login"));
 const Signup = lazy(() => import("./components/pages/Signup"));
 const ForgetPassword = lazy(() => import("./components/pages/ForgetPassword"));
+const TermsOfService = lazy(() => import("./components/pages/TermsOfService"));
 const OwnerDashboardLayout = lazy(
   () => import("./components/owner/OwnerDashboardLayout"),
 );
@@ -121,6 +122,15 @@ function App() {
           element={
             <Suspense fallback={<Loader />}>
               <ForgetPassword />
+            </Suspense>
+          }
+        />
+
+        <Route
+          path="/terms"
+          element={
+            <Suspense fallback={<Loader />}>
+              <TermsOfService />
             </Suspense>
           }
         />

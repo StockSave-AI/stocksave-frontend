@@ -130,7 +130,7 @@ export default function AddSavings() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-primary-500 shadow-[0_15px_30px_rgba(0,0,0,0.2)] text-white rounded-card p-6 flex justify-between items-center">
+      <div className="bg-primary-500 shadow-[0_15px_30px_rgba(0,0,0,0.2)] text-white rounded-card p-4 md:p-6 flex justify-between items-center gap-3">
         <div>
           <h2 className="text-h3">Add to Your Savings</h2>
           <p className="text-sm opacity-90">Make a deposit to boost your savings</p>
@@ -140,8 +140,8 @@ export default function AddSavings() {
         </div>
       </div>
 
-      <div className="bg-neutral-50 rounded-card shadow-card p-6 space-y-6">
-        <div className="flex justify-between items-center">
+      <div className="bg-neutral-50 rounded-card shadow-card p-4 md:p-6 space-y-6">
+        <div className="flex flex-wrap justify-between items-center gap-3">
           <div>
             <p className="text-sm text-neutral-500">Current Balance</p>
             <div className="flex items-center gap-3">
@@ -158,14 +158,14 @@ export default function AddSavings() {
             </div>
             <p className="text-xs text-neutral-400">Available for booking and withdrawal</p>
           </div>
-          <div className="bg-primary-100 text-primary-600 h-10 w-10 rounded-full flex items-center justify-center font-semibold">
+          <div className="bg-primary-100 text-primary-600 h-10 w-10 rounded-full flex items-center justify-center font-semibold shrink-0">
             <FaNairaSign />
           </div>
         </div>
 
         <div className="bg-white rounded-card shadow-card p-4 border border-neutral-200 space-y-4">
           <h3 className="font-semibold text-neutral-700">Choose Payment Method</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
             <PaymentMethodCard
               title="Paystack"
               description="Card, Bank, USSD"

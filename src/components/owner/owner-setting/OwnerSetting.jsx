@@ -3,6 +3,7 @@ import ProfileSection from "./ProfileSection";
 import BusinessSection from "./BusinessSection";
 import PaymentSection from "./PaymentSection";
 import StockAlertSection from "./StockAlertSection";
+import SecuritySection from "./SecuritySection";
 
 const OwnerSettings = () => {
   return (
@@ -16,6 +17,7 @@ const OwnerSettings = () => {
         </header>
 
         <ProfileSection />
+        <SecuritySection />
         <BusinessSection />
         <PaymentSection />
         <StockAlertSection />

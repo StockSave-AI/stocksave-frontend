@@ -1,12 +1,18 @@
 import React from "react";
 
-const ConfirmDepositModal = ({ isOpen, onClose, onConfirm, data }) => {
+const ConfirmDepositModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  data,
+  isSubmitting = false,
+}) => {
   if (!isOpen) return null;
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto"
-      onClick={onClose}
+      onClick={isSubmitting ? undefined : onClose}
     >
       <div
         className="bg-white w-full max-w-md md:max-w-2xl rounded-card shadow-2xl p-4 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-300
@@ -72,15 +78,17 @@ const ConfirmDepositModal = ({ isOpen, onClose, onConfirm, data }) => {
         <div className="flex flex-col md:flex-row gap-3 md:gap-4">
           <button
             onClick={onClose}
+            disabled={isSubmitting}
             className="flex-1 py-3 md:py-3 px-4 md:px-5 rounded-button border border-neutral-300 font-bold text-neutral-700 hover:bg-neutral-50 transition-colors text-sm md:text-sm"
           >
             Go Back
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 py-3 md:py-3 px-4 md:px-5 rounded-button bg-primary-400 text-white font-bold hover:bg-primary-500 transition-all shadow-md active:scale-95 text-sm md:text-sm"
+            disabled={isSubmitting}
+            className="flex-1 py-3 md:py-3 px-4 md:px-5 rounded-button bg-primary-400 text-white font-bold hover:bg-primary-500 transition-all shadow-md active:scale-95 text-sm md:text-sm disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Submit Deposit
+            {isSubmitting ? "Submitting..." : "Submit Deposit"}
           </button>
         </div>
       </div>
