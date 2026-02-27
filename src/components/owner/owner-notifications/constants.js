@@ -1,5 +1,10 @@
 export const TABS = [
   {
+    key: "withdrawal-alerts",
+    label: "Withdrawal Alerts",
+    empty: "No withdrawal alerts.",
+  },
+  {
     key: "pending-payments",
     label: "Pending Payments",
     empty: "No pending payments.",

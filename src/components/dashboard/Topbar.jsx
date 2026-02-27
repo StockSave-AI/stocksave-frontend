@@ -15,7 +15,7 @@ function Topbar({ toggleSidebar }) {
   const ownerNotificationsQuery = useOwnerUnreadNotifications(role === "owner");
   const customerNotificationsQuery = useCustomerUnreadNotifications(role === "customer");
   const ownerNotificationCount =
-    role === "owner" ? Number(ownerNotificationsQuery.totalAlerts || 0) : 0;
+    role === "owner" ? Number(ownerNotificationsQuery.unread || 0) : 0;
   const unreadCustomerNotifications =
     role === "customer" ? Number(customerNotificationsQuery.data || 0) : 0;
   const notificationRoute =

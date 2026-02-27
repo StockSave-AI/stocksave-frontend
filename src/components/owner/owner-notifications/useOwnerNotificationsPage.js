@@ -11,6 +11,7 @@ import {
   useOwnerNotificationLowStock,
   useOwnerNotificationNewUsers,
   useOwnerNotificationPendingPayments,
+  useOwnerNotificationWithdrawals,
   useOwnerNotificationReconciliation,
   useOwnerNotificationStockMatch,
   useOwnerNotificationSummary,
@@ -31,7 +32,11 @@ import {
   variantIdFrom,
 } from "./utils";
 
-export const useOwnerNotificationsPage = ({ isOwner, navigate, pageSize = 8 }) => {
+export const useOwnerNotificationsPage = ({
+  isOwner,
+  navigate,
+  pageSize = 8,
+}) => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("pending-payments");
   const [page, setPage] = useState(1);
@@ -39,11 +44,24 @@ export const useOwnerNotificationsPage = ({ isOwner, navigate, pageSize = 8 }) =
   const [readMap, setReadMap] = useState(() => getOwnerNotificationReadMap());
 
   const summaryQuery = useOwnerNotificationSummary(isOwner);
-  const feedQuery = useOwnerNotificationFeed({ page, limit: pageSize }, isOwner);
+  const feedQuery = useOwnerNotificationFeed(
+    { page, limit: pageSize },
+    isOwner,
+  );
   const pendingPaymentsQuery = useOwnerNotificationPendingPayments(isOwner);
-  const lowStockQuery = useOwnerNotificationLowStock({ threshold: 10 }, isOwner);
+  const withdrawalAlertsQuery = useOwnerNotificationWithdrawals(
+    { page: 1, limit: 20 },
+    isOwner,
+  );
+  const lowStockQuery = useOwnerNotificationLowStock(
+    { threshold: 10 },
+    isOwner,
+  );
   const fullyBookedQuery = useOwnerNotificationFullyBooked(isOwner);
-  const newUsersQuery = useOwnerNotificationNewUsers({ days: 7, limit: 20 }, isOwner);
+  const newUsersQuery = useOwnerNotificationNewUsers(
+    { days: 7, limit: 20 },
+    isOwner,
+  );
   const reconciliationQuery = useOwnerNotificationReconciliation(isOwner);
   const stockMatchQuery = useOwnerNotificationStockMatch(
     selectedVariantId,
@@ -54,28 +72,33 @@ export const useOwnerNotificationsPage = ({ isOwner, navigate, pageSize = 8 }) =
     mutationFn: markAllOwnerNotificationsRead,
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["owner-notifications-feed"] }),
-        queryClient.invalidateQueries({ queryKey: ["owner-notifications-summary"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["owner-notifications-feed"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["owner-notifications-summary"],
+        }),
       ]);
     },
   });
 
   const markOneFeedReadMutation = useMutation({
     mutationFn: (id) => markOwnerNotificationRead(id),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["owner-notifications-feed"] }),
-        queryClient.invalidateQueries({ queryKey: ["owner-notifications-summary"] }),
-      ]);
-    },
+    // Intentionally do not refetch immediately.
+    // Read state should reflect on next page reload/refresh.
+    onSuccess: () => {},
   });
 
   const clearAllFeedMutation = useMutation({
     mutationFn: clearAllOwnerNotifications,
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["owner-notifications-feed"] }),
-        queryClient.invalidateQueries({ queryKey: ["owner-notifications-summary"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["owner-notifications-feed"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["owner-notifications-summary"],
+        }),
       ]);
     },
   });
@@ -84,8 +107,12 @@ export const useOwnerNotificationsPage = ({ isOwner, navigate, pageSize = 8 }) =
     mutationFn: (id) => deleteOwnerNotification(id),
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["owner-notifications-feed"] }),
-        queryClient.invalidateQueries({ queryKey: ["owner-notifications-summary"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["owner-notifications-feed"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["owner-notifications-summary"],
+        }),
       ]);
     },
   });
@@ -100,9 +127,22 @@ export const useOwnerNotificationsPage = ({ isOwner, navigate, pageSize = 8 }) =
     () => toArray(pendingPaymentsQuery.data),
     [pendingPaymentsQuery.data],
   );
-  const lowItems = useMemo(() => toArray(lowStockQuery.data), [lowStockQuery.data]);
-  const fullItems = useMemo(() => toArray(fullyBookedQuery.data), [fullyBookedQuery.data]);
-  const newUsers = useMemo(() => toArray(newUsersQuery.data), [newUsersQuery.data]);
+  const withdrawalItems = useMemo(
+    () => toArray(withdrawalAlertsQuery.data),
+    [withdrawalAlertsQuery.data],
+  );
+  const lowItems = useMemo(
+    () => toArray(lowStockQuery.data),
+    [lowStockQuery.data],
+  );
+  const fullItems = useMemo(
+    () => toArray(fullyBookedQuery.data),
+    [fullyBookedQuery.data],
+  );
+  const newUsers = useMemo(
+    () => toArray(newUsersQuery.data),
+    [newUsersQuery.data],
+  );
   const reconciliation = readSummary(reconciliationQuery.data);
   const summary = readSummary(summaryQuery.data);
 
@@ -123,13 +163,18 @@ export const useOwnerNotificationsPage = ({ isOwner, navigate, pageSize = 8 }) =
     };
 
     if (previous) {
-      const prevLow = new Map((previous.low || []).map((item) => [item.id, item]));
-      const currLow = new Map((current.low || []).map((item) => [item.id, item]));
+      const prevLow = new Map(
+        (previous.low || []).map((item) => [item.id, item]),
+      );
+      const currLow = new Map(
+        (current.low || []).map((item) => [item.id, item]),
+      );
       const prevFull = new Set((previous.full || []).map((item) => item.id));
       const currFull = new Set((current.full || []).map((item) => item.id));
 
       current.low.forEach((item) => {
-        if (!prevLow.has(item.id)) toast(`New low stock alert: ${item.product}`);
+        if (!prevLow.has(item.id))
+          toast(`New low stock alert: ${item.product}`);
       });
       (previous.low || []).forEach((item) => {
         if (!currLow.has(item.id))
@@ -146,7 +191,12 @@ export const useOwnerNotificationsPage = ({ isOwner, navigate, pageSize = 8 }) =
     }
 
     saveSnapshot(current);
-  }, [fullItems, fullyBookedQuery.isSuccess, lowItems, lowStockQuery.isSuccess]);
+  }, [
+    fullItems,
+    fullyBookedQuery.isSuccess,
+    lowItems,
+    lowStockQuery.isSuccess,
+  ]);
 
   const recKey = `reconciliation:${new Date().toISOString().slice(0, 10)}`;
   const feedReferenceIndex = useMemo(() => {
@@ -181,10 +231,34 @@ export const useOwnerNotificationsPage = ({ isOwner, navigate, pageSize = 8 }) =
       tint: "border-yellow-200 bg-yellow-50/80",
       tag: "text-indigo-700 bg-indigo-100",
     })),
+    "withdrawal-alerts": withdrawalItems.map((item) => ({
+      id: `withdrawal-${item.id}`,
+      notificationId: item.id,
+      readKey: `withdrawal-alerts:${item.id}`,
+      isRead: Number(item?.is_read) === 1,
+      title: item?.title || "Withdrawal Alert",
+      message:
+        String(item?.message || "-")
+          .replace(/\s*Reference:\s*[^.]+\.?/gi, "")
+          .trim() || "-",
+      time: item?.created_at
+        ? new Date(item.created_at).toLocaleString("en-US", {
+            month: "short",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "just now",
+      actionLabel: "View Withdrawals",
+      onAction: () => navigate("/owner/withdrawals"),
+      tint: "border-yellow-200 bg-yellow-50/80",
+      tag: "text-red-700 bg-gradient-to-r from-pink-100 to-red-100 border border-red-200",
+    })),
     "pending-payments": pendingItems.map((item) => ({
       id: `pending-${item.transaction_id}`,
       notificationId:
-        feedReferenceIndex.get(`transaction:${Number(item?.transaction_id)}`) ?? null,
+        feedReferenceIndex.get(`transaction:${Number(item?.transaction_id)}`) ??
+        null,
       readKey: `pending-payments:${item.transaction_id}`,
       title: "Cash Deposit Pending",
       message: `${item.first_name || ""} ${item.last_name || ""} - ${formatCurrency(Number(item.amount || 0))}`,
@@ -277,22 +351,33 @@ export const useOwnerNotificationsPage = ({ isOwner, navigate, pageSize = 8 }) =
   const unread = Math.max(loadedUnread, backendUnread);
 
   const baseCounts = {
-    "pending-payments": Number(summary?.pending_payments || pendingItems.length || 0),
+    "withdrawal-alerts": Number(
+      summary?.withdrawal_alerts || withdrawalItems.length || 0,
+    ),
+    "pending-payments": Number(
+      summary?.pending_payments || pendingItems.length || 0,
+    ),
     "low-stock": Number(summary?.low_stock_alerts || lowItems.length || 0),
-    "fully-booked": Number(summary?.fully_booked_products || fullItems.length || 0),
+    "fully-booked": Number(
+      summary?.fully_booked_products || fullItems.length || 0,
+    ),
     "new-signups": Number(
-      (summary?.new_signups ??
+      summary?.new_signups ??
         summary?.new_signups_last_7_days ??
         newUsers.length ??
-        0),
+        0,
     ),
     reconciliation: reconciliationQuery.isSuccess ? 1 : 0,
   };
 
   const currentItems = itemsByTab[activeTab] || [];
   const orderedItems = [...currentItems].sort((a, b) => {
-    const aRead = a?.notificationId ? Boolean(a?.isRead) : Boolean(readMap[a.readKey]);
-    const bRead = b?.notificationId ? Boolean(b?.isRead) : Boolean(readMap[b.readKey]);
+    const aRead = a?.notificationId
+      ? Boolean(a?.isRead)
+      : Boolean(readMap[a.readKey]);
+    const bRead = b?.notificationId
+      ? Boolean(b?.isRead)
+      : Boolean(readMap[b.readKey]);
     if (aRead === bRead) return 0;
     return aRead ? 1 : -1;
   });
@@ -322,7 +407,7 @@ export const useOwnerNotificationsPage = ({ isOwner, navigate, pageSize = 8 }) =
     try {
       await markAllFeedReadMutation.mutateAsync();
     } catch {
-      // Keep local read update even if feed call fails.
+      // Keep local read-state fallback even when backend mark-all fails.
     }
     markOwnerNotificationsReadMany(
       allItems.map((item) => item.readKey).filter(Boolean),
@@ -363,12 +448,14 @@ export const useOwnerNotificationsPage = ({ isOwner, navigate, pageSize = 8 }) =
 
   const tabConfig = TABS.find((tab) => tab.key === activeTab);
   const tabLoading =
+    (activeTab === "withdrawal-alerts" && withdrawalAlertsQuery.isLoading) ||
     (activeTab === "pending-payments" && pendingPaymentsQuery.isLoading) ||
     (activeTab === "low-stock" && lowStockQuery.isLoading) ||
     (activeTab === "fully-booked" && fullyBookedQuery.isLoading) ||
     (activeTab === "new-signups" && newUsersQuery.isLoading) ||
     (activeTab === "reconciliation" && reconciliationQuery.isLoading);
   const tabError =
+    (activeTab === "withdrawal-alerts" && withdrawalAlertsQuery.isError) ||
     (activeTab === "pending-payments" && pendingPaymentsQuery.isError) ||
     (activeTab === "low-stock" && lowStockQuery.isError) ||
     (activeTab === "fully-booked" && fullyBookedQuery.isError) ||

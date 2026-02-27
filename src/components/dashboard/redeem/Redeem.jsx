@@ -24,13 +24,18 @@ const normalizeAccount = (item = {}) => ({
 });
 
 const getSavedAccounts = () => {
-  const persisted = JSON.parse(localStorage.getItem(REDEEM_ACCOUNTS_KEY) || "[]");
-  if (!Array.isArray(persisted)) return [];
-  const normalized = persisted
+  const persisted = JSON.parse(
+    localStorage.getItem(REDEEM_ACCOUNTS_KEY) || "[]",
+  );
+  const source = Array.isArray(persisted)
+    ? persisted
+    : persisted && typeof persisted === "object"
+      ? [persisted]
+      : [];
+  const normalized = source
     .map(normalizeAccount)
     .filter((item) => item.accountNumber);
-  if (normalized.length === 0) return [];
-  return [normalized[normalized.length - 1]];
+  return normalized;
 };
 
 const saveAccounts = (accounts = []) => {
@@ -179,10 +184,14 @@ const Redeem = () => {
     const nextAccounts =
       Number.isInteger(editingAccountIndex) && accounts[editingAccountIndex]
         ? accounts.map((item, idx) => (idx === editingAccountIndex ? normalized : item))
-        : [normalized];
+        : [...accounts, normalized];
     setAccounts(nextAccounts);
     saveAccounts(nextAccounts);
-    setSelectedAccount(0);
+    setSelectedAccount(
+      Number.isInteger(editingAccountIndex) && accounts[editingAccountIndex]
+        ? editingAccountIndex
+        : nextAccounts.length - 1,
+    );
     setEditingAccountIndex(null);
     setShowAddAccount(false);
   };

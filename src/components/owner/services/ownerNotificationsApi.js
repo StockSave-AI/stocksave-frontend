@@ -41,6 +41,12 @@ export const getOwnerNotificationFullyBooked = async () =>
 export const getOwnerNotificationPendingPayments = async () =>
   apiClient("/api/notifications/pending-payments");
 
+export const getOwnerNotificationWithdrawals = async ({
+  page = 1,
+  limit = 20,
+} = {}) =>
+  apiClient(`/api/notifications/withdrawals?page=${page}&limit=${limit}`);
+
 export const getOwnerNotificationStockMatch = async (variantId) =>
   apiClient(`/api/notifications/stock-match/${variantId}`);
 

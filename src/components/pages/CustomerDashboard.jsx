@@ -1,5 +1,4 @@
-import { useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import WelcomeCard from "../../components/dashboard/WelcomeCard";
 import ProgressSection from "../../components/dashboard/ProgressSection";
@@ -13,45 +12,16 @@ import DashboardActionsGrid from "../../components/dashboard/customer-dashboard/
 import PlanStateBanner from "../../components/dashboard/customer-dashboard/PlanStateBanner";
 import RecentActivitySection from "../../components/dashboard/customer-dashboard/RecentActivitySection";
 import { calculatePlanMetrics, normalizeFrequency } from "../dashboard/payment-plan/planCalculations";
-import { useVerifySavings } from "../hooks/useVerifySavings";
 
 function CustomerDashboard() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { data, isLoading, error } = useCustomerSummary();
   const { data: plansData } = usePlans();
-  const verifyMutation = useVerifySavings();
-  const verifiedRefs = useRef(new Set());
 
   const summary = data?.data;
   const plansPayload = plansData?.data || plansData || {};
   const currentPlan = plansPayload?.current_plan || null;
   const hasActivePlan = Boolean(currentPlan?.id);
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const reference = params.get("reference") || params.get("trxref");
-
-    if (!reference) return;
-    if (verifyMutation.isPending) return;
-    if (verifiedRefs.current.has(reference)) return;
-
-    verifiedRefs.current.add(reference);
-
-    verifyMutation.mutate(reference, {
-      onSuccess: () => {
-        const cleaned = new URLSearchParams(location.search);
-        cleaned.delete("reference");
-        cleaned.delete("trxref");
-        const nextQuery = cleaned.toString();
-        const nextUrl = `${location.pathname}${nextQuery ? `?${nextQuery}` : ""}`;
-        window.history.replaceState({}, "", nextUrl);
-      },
-      onError: () => {
-        verifiedRefs.current.delete(reference);
-      },
-    });
-  }, [location.pathname, location.search, verifyMutation]);
 
   if (isLoading) {
     return <Loader />;

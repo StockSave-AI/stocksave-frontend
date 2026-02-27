@@ -27,6 +27,7 @@ const PAGE_SIZE = 8;
 
 const iconMap = {
   feed: FiBell,
+  "withdrawal-alerts": FiBell,
   "pending-payments": FiCreditCard,
   "low-stock": FiAlertTriangle,
   "fully-booked": FiShoppingCart,
@@ -243,27 +244,30 @@ export default function OwnerNotifications() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
-                      <button
-                        onClick={() => markOne(item, !isRead)}
-                        disabled={isRead}
-                        className="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-button border border-neutral-200 bg-white text-neutral-700 text-sm w-full sm:w-auto"
-                      >
-                        <FiCheck size={14} />
-                        Mark read
-                      </button>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      {!isRead ? (
+                        <button
+                          onClick={() => markOne(item, !isRead)}
+                          aria-label="Mark notification as read"
+                          className="inline-flex h-9 w-9 sm:h-auto sm:w-auto items-center justify-center gap-1 px-0 sm:px-3 py-0 sm:py-2 rounded-button border border-neutral-200 bg-white text-neutral-700 text-sm"
+                        >
+                          <FiCheck size={14} />
+                          <span className="hidden sm:inline">Mark read</span>
+                        </button>
+                      ) : null}
                       <button
                         onClick={item.onAction}
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-button bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-sm font-semibold w-full sm:w-auto"
+                        aria-label={item.actionLabel}
+                        className="inline-flex h-9 w-9 sm:h-auto sm:w-auto items-center justify-center gap-2 px-0 sm:px-4 py-0 sm:py-2 rounded-button bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-sm font-semibold"
                       >
                         <FiEye size={14} />
-                        {item.actionLabel}
+                        <span className="hidden sm:inline">{item.actionLabel}</span>
                       </button>
                       <button
                         onClick={() => deleteOne(item)}
                         title="Delete notification"
                         aria-label="Delete notification"
-                        className="inline-flex items-center justify-center p-2.5 rounded-button bg-red-50 hover:bg-red-100 text-red-700 w-full sm:w-auto"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-button bg-red-50 hover:bg-red-100 text-red-700"
                       >
                         <FiTrash2 size={14} />
                       </button>

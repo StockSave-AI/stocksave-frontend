@@ -56,9 +56,9 @@ const formatDateTime = (value) => {
 };
 
 const StatCard = ({ label, value }) => (
-  <div className="bg-white border border-neutral-200 rounded-card p-4 shadow-card">
+  <div className="bg-white border border-neutral-200 rounded-card p-3 sm:p-4 shadow-card min-w-0">
     <p className="text-xs text-neutral-500">{label}</p>
-    <p className="text-xl font-semibold text-neutral-900">{value}</p>
+    <p className="text-base sm:text-xl font-semibold text-neutral-900 truncate">{value}</p>
   </div>
 );
 
@@ -227,9 +227,9 @@ export default function Notifications() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <StatCard label="Unread" value={Number(stats?.unread || 0)} />
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <StatCard label="This Week" value={Number(stats?.this_week || 0)} />
+        <StatCard label="Unread" value={Number(stats?.unread || 0)} />
         <StatCard label="Total" value={Number(stats?.total || 0)} />
       </div>
 
