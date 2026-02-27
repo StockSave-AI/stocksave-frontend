@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "react-hot-toast";
 import {
   fetchOwnerAllBookings,
   fetchOwnerRecentCash,
@@ -9,7 +8,6 @@ import {
   fetchOwnerSearchUsers,
   fetchOwnerTransactions,
   fetchOwnerWithdrawals,
-  completeOwnerWithdrawal,
   recordOwnerDeposit,
 } from "../services/ownerApi";
 import { updateBookingStatus } from "../../services/inventory";
@@ -105,26 +103,3 @@ export const useOwnerWithdrawals = (params = {}) =>
     queryKey: ["owner-withdrawals", params],
     queryFn: () => fetchOwnerWithdrawals(params),
   });
-
-export const useCompleteOwnerWithdrawal = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: completeOwnerWithdrawal,
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["owner-withdrawals"] }),
-        queryClient.invalidateQueries({ queryKey: ["owner-stats"] }),
-        queryClient.invalidateQueries({ queryKey: ["owner-transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["savings-history"] }),
-        queryClient.invalidateQueries({ queryKey: ["recent-savings"] }),
-        queryClient.invalidateQueries({ queryKey: ["customer-summary"] }),
-        queryClient.invalidateQueries({ queryKey: ["savings-balance"] }),
-      ]);
-      toast.success("Withdrawal marked as completed");
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to complete withdrawal");
-    },
-  });
-};

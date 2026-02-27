@@ -9,7 +9,7 @@ import { useCustomerUnreadNotifications } from "../hooks/useNotifications";
 function Topbar({ toggleSidebar }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const storedRole = getAuthRole();
+  const storedRole = String(getAuthRole() || "").toLowerCase();
   const isOwnerPath = location.pathname.startsWith("/owner");
   const role = isOwnerPath ? "owner" : storedRole || "customer";
   const ownerNotificationsQuery = useOwnerUnreadNotifications(role === "owner");
@@ -23,13 +23,18 @@ function Topbar({ toggleSidebar }) {
   const profileRoute = role === "owner" ? "/owner/setting" : "/dashboard/settings";
   const totalUnread =
     role === "owner" ? ownerNotificationCount : unreadCustomerNotifications;
-  const hasShownNotificationToastRef = useRef(false);
+  const previousUnreadRef = useRef(0);
 
   useEffect(() => {
-    if (totalUnread <= 1) return;
-    if (hasShownNotificationToastRef.current) return;
+    const previousUnread = Number(previousUnreadRef.current || 0);
+    const currentUnread = Number(totalUnread || 0);
+    if (currentUnread <= 0) {
+      previousUnreadRef.current = 0;
+      return;
+    }
+    if (currentUnread <= previousUnread) return;
 
-    hasShownNotificationToastRef.current = true;
+    previousUnreadRef.current = currentUnread;
     toast.custom(
       (t) => (
         <div className="max-w-md rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 shadow-lg">

@@ -2,7 +2,12 @@ import { useState } from "react";
 import { FiImage } from "react-icons/fi";
 import { canAfford, isBookableSize } from "./bookFoodUtils";
 
-const FoodItemCard = ({ item, onAddToCart, userBalance, onLockedAction }) => {
+const FoodItemCard = ({
+  item,
+  onAddToCart,
+  userBalance,
+  onLockedAction,
+}) => {
   const [qty, setQty] = useState(1);
   const [selectedSize, setSelectedSize] = useState(item.sizes[0]);
 

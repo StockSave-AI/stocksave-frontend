@@ -104,7 +104,10 @@ function CustomerDashboard() {
     plan: currentPlan,
     progressStats: {
       total_saved:
-        plansPayload?.progress_stats?.total_saved ?? summary?.summary_cards?.total_savings ?? 0,
+        plansPayload?.progress?.total_saved ??
+        plansPayload?.progress_stats?.total_saved ??
+        summary?.summary_cards?.total_savings ??
+        0,
     },
     recentActivity: summary?.recent_activity || [],
     summaryProgress: summary?.progress || {},
@@ -125,15 +128,15 @@ function CustomerDashboard() {
 
   const progressItems = [
     {
-      title: planMetrics.periodLabel,
-      saved: planMetrics.periodSaved,
-      goal: planMetrics.periodGoal,
+      title: "Plan Target Progress",
+      saved: planMetrics.totalSaved,
+      goal: planMetrics.targetAmount,
       color: "primary",
       subtitle: completedLabel,
     },
     {
       title: annualLabel,
-      saved: planMetrics.annualProjection,
+      saved: planMetrics.totalSaved,
       goal: planMetrics.annualProjection,
       color: "secondary",
       subtitle: "Projected yearly savings",

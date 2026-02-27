@@ -19,10 +19,17 @@ const buildHeaders = ({ hasBody = false } = {}) => {
 };
 
 export const apiClient = async (path, { method = "GET", body } = {}) => {
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  const headers = isFormData
+    ? {
+        ...(getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {}),
+      }
+    : buildHeaders({ hasBody: Boolean(body) });
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
-    headers: buildHeaders({ hasBody: Boolean(body) }),
-    body: body ? JSON.stringify(body) : undefined,
+    headers,
+    body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
   });
 
   const data = await response.json().catch(() => null);

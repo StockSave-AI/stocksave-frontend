@@ -183,11 +183,18 @@ export const calculatePlanMetrics = ({
     return total;
   }, 0);
 
-  const totalSaved = Math.max(0, (() => {
-    if (paymentHistory.length > 0) return completedFromHistory;
-    if (recentActivity.length > 0) return completedFromRecentActivity;
-    return toNumber(progressStats?.total_saved || plan?.totalSaved);
-  })());
+  const hasProgressTotalSaved =
+    progressStats &&
+    Object.prototype.hasOwnProperty.call(progressStats, "total_saved");
+  const totalSaved = Math.max(
+    0,
+    (() => {
+      if (hasProgressTotalSaved) return toNumber(progressStats?.total_saved);
+      if (paymentHistory.length > 0) return completedFromHistory;
+      if (recentActivity.length > 0) return completedFromRecentActivity;
+      return toNumber(plan?.totalSaved);
+    })(),
+  );
   const paymentsMade = amountPerInterval > 0 ? Math.floor(totalSaved / amountPerInterval) : 0;
   const dayCompleted =
     dailyExpected && dailyExpected > 0

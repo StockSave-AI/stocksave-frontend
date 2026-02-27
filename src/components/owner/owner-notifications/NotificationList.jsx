@@ -1,3 +1,3 @@
-export default function NotificationList({ children }) {
-  return <div className="space-y-4">{children}</div>;
+export default function NotificationList({ children, className = "" }) {
+  return <div className={`space-y-4 ${className}`}>{children}</div>;
 }

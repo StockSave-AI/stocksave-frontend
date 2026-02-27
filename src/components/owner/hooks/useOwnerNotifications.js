@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  getOwnerNotificationFeed,
   getOwnerNotificationSummary,
   getOwnerNotificationNewUsers,
   getOwnerNotificationLowStock,
@@ -66,6 +67,16 @@ export const useOwnerNotificationSummary = (enabled = true) =>
     enabled,
   });
 
+export const useOwnerNotificationFeed = (
+  { page = 1, limit = 20 } = {},
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: ["owner-notifications-feed", page, limit],
+    queryFn: () => getOwnerNotificationFeed({ page, limit }),
+    enabled,
+  });
+
 export const useOwnerNotificationNewUsers = (
   { days = 7, limit = 20 } = {},
   enabled = true,
@@ -116,25 +127,18 @@ export const useOwnerNotificationStockMatch = (variantId, enabled = true) =>
 
 export const useOwnerUnreadNotifications = (enabled = true) => {
   const summaryQuery = useOwnerNotificationSummary(enabled);
-  const [readVersion, setReadVersion] = useState(0);
 
-  useEffect(() => {
-    const handleReadChanged = () => setReadVersion((prev) => prev + 1);
-    window.addEventListener(OWNER_NOTIFICATIONS_READ_EVENT, handleReadChanged);
-    return () =>
-      window.removeEventListener(OWNER_NOTIFICATIONS_READ_EVENT, handleReadChanged);
-  }, []);
-
+  const summaryPayload = summaryQuery.data?.data || summaryQuery.data || {};
   const totalAlerts = toNumber(
-    summaryQuery.data?.total_alerts ??
-      summaryQuery.data?.data?.total_alerts ??
-      summaryQuery.data?.alerts?.total_alerts,
+    summaryPayload?.total_alerts ?? summaryQuery.data?.alerts?.total_alerts,
   );
+  const backendUnread = toNumber(summaryPayload?.unread_notifications);
 
   const unread = useMemo(() => {
+    if (backendUnread > 0 || backendUnread === 0) return backendUnread;
     const readCount = getOwnerReadKeysCount();
     return Math.max(0, totalAlerts - readCount);
-  }, [readVersion, totalAlerts]);
+  }, [backendUnread, totalAlerts]);
 
   return {
     ...summaryQuery,

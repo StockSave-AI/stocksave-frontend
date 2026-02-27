@@ -1,5 +1,28 @@
 import { apiClient } from "../../../api/apiClient";
 
+export const getOwnerNotificationFeed = async ({ page = 1, limit = 20 } = {}) =>
+  apiClient(`/api/notifications/feed?page=${page}&limit=${limit}`);
+
+export const markAllOwnerNotificationsRead = async () =>
+  apiClient("/api/notifications/mark-all", {
+    method: "PATCH",
+  });
+
+export const markOwnerNotificationRead = async (id) =>
+  apiClient(`/api/notifications/${id}/read`, {
+    method: "PATCH",
+  });
+
+export const clearAllOwnerNotifications = async () =>
+  apiClient("/api/notifications/clear-all", {
+    method: "DELETE",
+  });
+
+export const deleteOwnerNotification = async (id) =>
+  apiClient(`/api/notifications/${id}`, {
+    method: "DELETE",
+  });
+
 export const getOwnerNotificationSummary = async () =>
   apiClient("/api/notifications/summary");
 

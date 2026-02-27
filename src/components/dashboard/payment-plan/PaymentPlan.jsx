@@ -77,7 +77,10 @@ export default function PaymentPlan() {
   );
 
   const currentPlanRaw = payload.current_plan || null;
-  const progressRaw = useMemo(() => payload.progress_stats || {}, [payload]);
+  const progressRaw = useMemo(
+    () => payload.progress || payload.progress_stats || {},
+    [payload],
+  );
   const paymentHistoryRaw = useMemo(() => payload.payment_history || [], [payload]);
   const upcomingRaw = useMemo(() => payload.upcoming_payments || [], [payload]);
   const settingsRaw = payload.settings || {};
@@ -113,10 +116,12 @@ export default function PaymentPlan() {
         currentPlanRaw.next_payment ||
         metrics.nextPayment ||
         "",
-      totalTarget: Number(currentPlanRaw.target_amount || 0),
+      totalTarget: Number(currentPlanRaw.target_amount || progressRaw.target_amount || 0),
       paymentsMade: Number(metrics.completedIntervals || 0),
       totalSaved: Number(metrics.totalSaved || 0),
-      missedPayments: Number(progressRaw.missed_payments || 0),
+      missedPayments: Number(
+        progressRaw.missed_payments ?? progressRaw.payments_missed ?? 0,
+      ),
     };
   }, [currentPlanRaw, progressRaw]);
 

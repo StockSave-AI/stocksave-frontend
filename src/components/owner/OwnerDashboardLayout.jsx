@@ -1,7 +1,8 @@
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Suspense, useEffect, useState } from "react";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Suspense, useState } from "react";
 import {
   FiBell,
+  FiBarChart2,
   FiCreditCard,
   FiHome,
   FiLayers,
@@ -11,7 +12,6 @@ import {
   FiSettings,
   FiShoppingBag,
   FiUsers,
-  FiX,
 } from "react-icons/fi";
 import Topbar from "../dashboard/Topbar";
 import { clearAuthToken } from "../../utils/authStorage";
@@ -22,6 +22,7 @@ const links = [
   { to: "/owner/dashboard", label: "Dashboard", icon: <FiHome /> },
   { to: "/owner/cash-deposit", label: "Record Cash", icon: <FiCreditCard /> },
   { to: "/owner/booking", label: "Bookings", icon: <FiShoppingBag /> },
+  { to: "/owner/analytics", label: "Analytics", icon: <FiBarChart2 /> },
   { to: "/owner/inventory", label: "Inventory", icon: <FiLayers /> },
   { to: "/owner/withdrawals", label: "Withdrawals", icon: <FiRepeat /> },
   { to: "/owner/users", label: "View Users", icon: <FiUsers /> },
@@ -33,11 +34,6 @@ export default function OwnerDashboardLayout() {
   const [isOpen, setIsOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    setIsOpen(false);
-  }, [location.pathname]);
 
   const handleLogout = () => {
     clearAuthToken();
@@ -62,12 +58,6 @@ export default function OwnerDashboardLayout() {
           } md:translate-x-0 flex flex-col justify-between`}
         >
           <div>
-            <div className="flex justify-end p-4 md:hidden">
-              <button onClick={() => setIsOpen(false)}>
-                <FiX size={20} />
-              </button>
-            </div>
-
             <nav className="flex flex-col gap-2 px-4 md:px-3 mt-6 md:mt-3">
               {links.map((link) => (
                 <NavLink

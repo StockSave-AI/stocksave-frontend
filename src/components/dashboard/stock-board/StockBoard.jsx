@@ -2,11 +2,11 @@ import { useState, useMemo } from "react";
 import { FiShoppingCart, FiBox, FiSearch } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { StockCard } from "./StockCard";
-import { StockAlerts } from "./StockAlerts";
 import { RecentUpdates } from "./RecentUpdates";
 import { StockCategory } from "./StockCategory";
 import StockSearch from "./StockSearch";
 import { useStockBoardData } from "../../hooks/useInventory";
+import { useCustomerNotifications } from "../../hooks/useNotifications";
 
 const normalizeStockData = (response) => {
   const payload = response?.data ?? response ?? {};
@@ -156,10 +156,55 @@ const StockBoard = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const stockBoardQuery = useStockBoardData();
+  const stockUpdatesQuery = useCustomerNotifications({
+    type: "stock_alert",
+    page: 1,
+    limit: 20,
+  });
   const stockData = useMemo(
     () => normalizeStockData(stockBoardQuery.data),
     [stockBoardQuery.data],
   );
+  const notificationStockUpdates = useMemo(() => {
+    const payload = stockUpdatesQuery.data;
+    const rows = Array.isArray(payload?.data)
+      ? payload.data
+      : Array.isArray(payload)
+        ? payload
+        : [];
+
+    return rows
+      .filter((item) => String(item?.type || "").toLowerCase() === "stock_alert")
+      .map((item) => {
+        const createdAt = item?.created_at ? new Date(item.created_at) : null;
+        const time = createdAt && !Number.isNaN(createdAt.getTime())
+          ? createdAt.toLocaleString("en-US", {
+              month: "short",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "Just now";
+
+        return {
+          id: item?.id,
+          title: item?.title || "New Stock Available",
+          desc: item?.message || "",
+          time,
+        };
+      });
+  }, [stockUpdatesQuery.data]);
+
+  const recentUpdates = useMemo(() => {
+    const existing = Array.isArray(stockData.updates) ? stockData.updates : [];
+    const existingNormalized = existing.map((update, index) => ({
+      id: update?.id || `legacy-${index}`,
+      title: update?.title || "Stock Updated",
+      desc: update?.desc || update?.message || "",
+      time: update?.time || "",
+    }));
+    return [...notificationStockUpdates, ...existingNormalized].slice(0, 5);
+  }, [notificationStockUpdates, stockData.updates]);
 
   const filteredItems = useMemo(() => {
     return stockData.items.filter((item) =>
@@ -248,14 +293,12 @@ const StockBoard = () => {
         ) : null}
       </div>
 
-      <StockAlerts alerts={stockData.alerts} />
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <StockCategory categories={stockData.categories} />
         <RecentUpdates
-          updates={stockData.updates}
-          isLoading={stockBoardQuery.isLoading}
-          isError={stockBoardQuery.isError}
+          updates={recentUpdates}
+          isLoading={stockBoardQuery.isLoading || stockUpdatesQuery.isLoading}
+          isError={stockBoardQuery.isError || stockUpdatesQuery.isError}
         />
       </div>
     </div>

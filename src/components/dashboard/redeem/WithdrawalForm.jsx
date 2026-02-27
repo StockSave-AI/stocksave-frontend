@@ -43,6 +43,7 @@ export default function WithdrawalForm({
   selectedAccount,
   onSelectAccount,
   onAddAccount,
+  onEditAccount,
   onDeleteAccount,
   onCancel,
   onSubmit,
@@ -203,6 +204,13 @@ export default function WithdrawalForm({
               <div className="flex items-center gap-3">
                 <button
                   type="button"
+                  onClick={() => onEditAccount(idx)}
+                  className="inline-flex items-center justify-center h-8 px-2 rounded-md text-primary-600 hover:bg-primary-50 transition text-xs font-semibold"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
                   onClick={() => onDeleteAccount(idx)}
                   className="inline-flex items-center justify-center h-8 w-8 rounded-md text-error hover:bg-error/10 transition"
                   aria-label="Delete bank account"
@@ -230,7 +238,7 @@ export default function WithdrawalForm({
             onClick={onAddAccount}
             className="text-primary-600 text-sm font-semibold mt-2"
           >
-            + Add New Bank Account
+            + Add Bank Account
           </button>
         </div>
       )}

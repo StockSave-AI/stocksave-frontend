@@ -4,15 +4,16 @@ import { FaUser } from "react-icons/fa";
 import SectionCard from "./SectionCard";
 import Input from "./Input";
 import ActionButtons from "./ActionButtons";
-import { useCustomerSummary } from "../../hooks/useCustomerSummary";
+import { useProfile } from "../../hooks/useProfile";
 import { useUpdateProfile } from "../../hooks/useProfile";
 import { formatDisplayDate } from "../../../utils/date";
 
 export default function ProfileSection() {
   const [imagePreview, setImagePreview] = useState(null);
-  const { data: summaryResponse, isLoading } = useCustomerSummary();
+  const { data: profileResponse, isLoading } = useProfile();
   const updateProfileMutation = useUpdateProfile();
-  const profile = summaryResponse?.data?.profile || {};
+  const profile =
+    profileResponse?.data?.profile || profileResponse?.profile || profileResponse?.data || {};
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -149,7 +150,7 @@ export default function ProfileSection() {
       </div>
 
       <div className="text-sm text-neutral-500">
-        Member since: {formatDisplayDate(profile.member_since, "-")}
+        Member since: {formatDisplayDate(profile.created_at || profile.member_since, "-")}
       </div>
 
       <ActionButtons

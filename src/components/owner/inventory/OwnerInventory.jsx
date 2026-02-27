@@ -48,7 +48,8 @@ function VariantCard({ variant, onViewBatches, slotsOverride }) {
   const displayedSlots =
     slotsOverride !== null && slotsOverride !== undefined
       ? Number(slotsOverride)
-      : variant?.total_remaining !== null && variant?.total_remaining !== undefined
+      : variant?.total_remaining !== null &&
+          variant?.total_remaining !== undefined
         ? Number(variant.total_remaining)
         : Number(variant?.stock_quantity ?? 0);
 
@@ -71,18 +72,28 @@ function VariantCard({ variant, onViewBatches, slotsOverride }) {
       <div className="p-4 space-y-2 flex-1">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-wide text-neutral-500">{variant.category}</p>
-            <h3 className="text-base font-semibold text-neutral-800">{variant.product_name}</h3>
+            <p className="text-xs uppercase tracking-wide text-neutral-500">
+              {variant.category}
+            </p>
+            <h3 className="text-base font-semibold text-neutral-800">
+              {variant.product_name}
+            </h3>
           </div>
           <span className="text-xs px-2 py-1 rounded-full bg-primary-50 text-primary-700 border border-primary-100">
             {variant.size_label}
           </span>
         </div>
-        <p className="text-sm text-neutral-600">Price: {formatCurrency(variant.price)}</p>
+        <p className="text-sm text-neutral-600">
+          Price: {formatCurrency(variant.price)}
+        </p>
         <p className="text-sm text-neutral-600">
           Stock:{" "}
           <span className="font-semibold text-primary-700">
-            {(Number.isFinite(displayedSlots) ? displayedSlots : 0).toLocaleString()} slots
+            {(Number.isFinite(displayedSlots)
+              ? displayedSlots
+              : 0
+            ).toLocaleString()}{" "}
+            slots
           </span>
         </p>
       </div>
@@ -105,10 +116,14 @@ export default function OwnerInventory() {
   const inventoryListQuery = useInventoryList();
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [showAddInventory, setShowAddInventory] = useState(true);
-  const batchesQuery = useStockBatches(selectedVariant?.variant_id, Boolean(selectedVariant));
+  const batchesQuery = useStockBatches(
+    selectedVariant?.variant_id,
+    Boolean(selectedVariant),
+  );
 
   const variants = useMemo(
-    () => flattenVariants(categoriesQuery.data?.data || categoriesQuery.data || []),
+    () =>
+      flattenVariants(categoriesQuery.data?.data || categoriesQuery.data || []),
     [categoriesQuery.data],
   );
   const inventorySlotMap = useMemo(() => {
@@ -150,22 +165,28 @@ export default function OwnerInventory() {
       <div className="bg-white rounded-card border border-neutral-100 shadow-card p-6">
         <div className="flex items-start justify-between flex-col sm:flex-row gap-3">
           <div>
-            <p className="text-xs text-neutral-500 uppercase">Inventory</p>
-            <h2 className="text-2xl font-semibold text-neutral-800">Manage Stock and FIFO Batches</h2>
+            <p className="text-xs text-primary-500 uppercase">Inventory</p>
+            <h2 className="text-2xl font-semibold text-neutral-800">
+              Manage Stock and FIFO Batches
+            </h2>
             <p className="text-sm text-neutral-500 mt-1">
               Add batches, view remaining slots, and track consumption order.
             </p>
           </div>
           <div className="flex items-center gap-2 text-sm text-neutral-600">
             <FiBarChart2 className="text-primary-600" />
-            <span>{hasData ? `${variants.length} variants` : "No variants loaded"}</span>
+            <span>
+              {hasData ? `${variants.length} variants` : "No variants loaded"}
+            </span>
           </div>
         </div>
       </div>
 
       <section className="bg-white border border-neutral-200 rounded-xl shadow-sm p-4 md:p-6">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-lg font-semibold text-neutral-800">Add Inventory Batch</h3>
+          <h3 className="text-lg font-semibold text-neutral-800">
+            Add Inventory Batch
+          </h3>
           <button
             type="button"
             onClick={() => setShowAddInventory((prev) => !prev)}
@@ -187,7 +208,9 @@ export default function OwnerInventory() {
 
       <section className="bg-white border border-neutral-200 rounded-xl shadow-sm p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold text-neutral-800">All Variants</h3>
+          <h3 className="text-lg font-semibold text-neutral-800">
+            All Variants
+          </h3>
           {categoriesQuery.isLoading ? (
             <span className="text-xs text-neutral-500">Loading...</span>
           ) : null}
@@ -205,13 +228,17 @@ export default function OwnerInventory() {
           </div>
         ) : null}
 
-        {!categoriesQuery.isLoading && !categoriesQuery.isError && variants.length === 0 ? (
+        {!categoriesQuery.isLoading &&
+        !categoriesQuery.isError &&
+        variants.length === 0 ? (
           <div className="h-48 flex items-center justify-center text-sm text-neutral-500">
             No inventory found. Add a batch to get started.
           </div>
         ) : null}
 
-        {!categoriesQuery.isLoading && !categoriesQuery.isError && variants.length > 0 ? (
+        {!categoriesQuery.isLoading &&
+        !categoriesQuery.isError &&
+        variants.length > 0 ? (
           <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {variants.map((variant) => (
               <VariantCard

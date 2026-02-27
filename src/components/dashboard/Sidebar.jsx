@@ -5,7 +5,6 @@ import {
   FiShoppingCart,
   FiBox,
   FiSettings,
-  FiX,
   FiLogOut,
   FiCreditCard,
 } from "react-icons/fi";
@@ -63,14 +62,6 @@ function Sidebar({ isOpen, setIsOpen }) {
     flex flex-col justify-between
   `}
       >
-        {}
-        <div className="flex justify-end p-4 md:hidden">
-          <button onClick={() => setIsOpen(false)}>
-            <FiX size={20} />
-          </button>
-        </div>
-
-        {}
         <nav className="flex flex-col gap-2 px-4 md:px-3 mt-6 md:mt-3 flex-1">
           {links.map((link) => (
             <NavLink
