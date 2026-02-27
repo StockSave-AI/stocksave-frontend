@@ -2,12 +2,7 @@ import { useState } from "react";
 import { FiImage } from "react-icons/fi";
 import { canAfford, isBookableSize } from "./bookFoodUtils";
 
-const FoodItemCard = ({
-  item,
-  onAddToCart,
-  userBalance,
-  onLockedAction,
-}) => {
+const FoodItemCard = ({ item, onAddToCart, userBalance, onLockedAction }) => {
   const [qty, setQty] = useState(1);
   const [selectedSize, setSelectedSize] = useState(item.sizes[0]);
 
@@ -21,7 +16,9 @@ const FoodItemCard = ({
   };
 
   const total = Number(selectedSize?.price || 0) * (qty || 0);
-  const itemName = String(item?.name || "").trim().toLowerCase();
+  const itemName = String(item?.name || "")
+    .trim()
+    .toLowerCase();
   const isUnavailable =
     itemName === "salt" &&
     (item?.bookable === false || !isBookableSize(selectedSize));
@@ -78,7 +75,6 @@ const FoodItemCard = ({
           </div>
         </div>
 
-        {/* Quantity */}
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm text-gray-500">Quantity</span>
 
@@ -109,7 +105,6 @@ const FoodItemCard = ({
           </div>
         </div>
 
-        {/* Total */}
         <div className="bg-[#F0FDF4] rounded-xl p-3 flex justify-between items-center">
           <span className="text-sm text-gray-600">Total</span>
           <span className="text-lg font-bold text-[#10B981]">
@@ -117,7 +112,6 @@ const FoodItemCard = ({
           </span>
         </div>
 
-        {/* Button */}
         <button
           type="button"
           disabled={!qty || qty < 1}
@@ -127,7 +121,11 @@ const FoodItemCard = ({
               return;
             }
             if (isLockedByBalance) {
-              onLockedAction?.({ reason: "insufficient_balance", item, selectedSize });
+              onLockedAction?.({
+                reason: "insufficient_balance",
+                item,
+                selectedSize,
+              });
               return;
             }
             onAddToCart(item, selectedSize, qty);

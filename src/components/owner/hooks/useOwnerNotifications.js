@@ -7,6 +7,7 @@ import {
   getOwnerNotificationLowStock,
   getOwnerNotificationFullyBooked,
   getOwnerNotificationPendingPayments,
+  getOwnerNotificationWithdrawals,
   getOwnerNotificationStockMatch,
   getOwnerNotificationReconciliation,
 } from "../services/ownerNotificationsApi";
@@ -108,6 +109,16 @@ export const useOwnerNotificationPendingPayments = (enabled = true) =>
   useQuery({
     queryKey: ["owner-notifications-pending-payments"],
     queryFn: getOwnerNotificationPendingPayments,
+    enabled,
+  });
+
+export const useOwnerNotificationWithdrawals = (
+  { page = 1, limit = 20 } = {},
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: ["owner-notifications-withdrawals", page, limit],
+    queryFn: () => getOwnerNotificationWithdrawals({ page, limit }),
     enabled,
   });
 

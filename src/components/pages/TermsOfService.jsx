@@ -55,7 +55,6 @@ export default function TermsOfService() {
   return (
     <div className="min-h-screen bg-neutral-100 py-6 px-3 sm:px-6">
       <div className="max-w-5xl mx-auto rounded-card overflow-hidden border border-neutral-200 bg-white shadow-card">
-        {/* HEADER */}
         <div className="bg-success px-6 py-14 text-center text-white">
           <div className="flex justify-center mb-5">
             <div className="bg-white/20 p-4 rounded-2xl">
@@ -72,7 +71,6 @@ export default function TermsOfService() {
           </p>
         </div>
 
-        {/* BODY */}
         <div className="px-5 sm:px-10 py-10 space-y-10">
           {sections.map((section) => (
             <section key={section.title} className="space-y-3">
@@ -84,8 +82,7 @@ export default function TermsOfService() {
               </p>
             </section>
           ))}
-
-          {/* CONTACT */}
+          T
           <section className="space-y-4">
             <h2 className="text-lg font-semibold text-neutral-900">
               Contact Us
@@ -102,7 +99,6 @@ export default function TermsOfService() {
           </section>
         </div>
 
-        {/* FOOTER */}
         <div className="border-t border-neutral-200 px-5 sm:px-10 py-5 text-center text-xs text-neutral-500">
           © 2026 Stocksave AI. All rights reserved.
         </div>

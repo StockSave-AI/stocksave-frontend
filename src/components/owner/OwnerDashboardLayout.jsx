@@ -2,7 +2,6 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Suspense, useState } from "react";
 import {
   FiBell,
-  FiBarChart2,
   FiCreditCard,
   FiHome,
   FiLayers,
@@ -22,7 +21,6 @@ const links = [
   { to: "/owner/dashboard", label: "Dashboard", icon: <FiHome /> },
   { to: "/owner/cash-deposit", label: "Record Cash", icon: <FiCreditCard /> },
   { to: "/owner/booking", label: "Bookings", icon: <FiShoppingBag /> },
-  { to: "/owner/analytics", label: "Analytics", icon: <FiBarChart2 /> },
   { to: "/owner/inventory", label: "Inventory", icon: <FiLayers /> },
   { to: "/owner/withdrawals", label: "Withdrawals", icon: <FiRepeat /> },
   { to: "/owner/users", label: "View Users", icon: <FiUsers /> },
@@ -55,10 +53,10 @@ export default function OwnerDashboardLayout() {
         <aside
           className={`fixed top-20 left-0 h-[calc(100vh-5rem)] bg-white border-r border-neutral-200 z-50 transform transition-transform duration-300 w-[60%] sm:w-52 md:w-56 lg:w-64 ${
             isOpen ? "translate-x-0" : "-translate-x-full"
-          } md:translate-x-0 flex flex-col justify-between`}
+          } md:translate-x-0 flex flex-col overflow-y-auto`}
         >
-          <div>
-            <nav className="flex flex-col gap-2 px-4 md:px-3 mt-6 md:mt-3">
+          <div className="flex-1 min-h-0">
+            <nav className="flex flex-col gap-2 px-4 md:px-3 mt-6 md:mt-3 pb-3">
               {links.map((link) => (
                 <NavLink
                   key={link.to}
@@ -80,13 +78,15 @@ export default function OwnerDashboardLayout() {
             </nav>
           </div>
 
-          <button
-            onClick={() => setLogoutOpen(true)}
-            className="flex items-center gap-3 px-4 md:px-3 py-3 md:py-2.5 m-4 md:m-3 rounded-lg text-sm font-medium text-red-600 border-t border-neutral-400 hover:bg-red-100 transition"
-          >
-            <FiLogOut />
-            Log Out
-          </button>
+          <div className="mt-auto p-4 md:p-3 border-t border-neutral-200 bg-white">
+            <button
+              onClick={() => setLogoutOpen(true)}
+              className="flex w-full items-center gap-3 px-4 md:px-3 py-3 md:py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-100 transition"
+            >
+              <FiLogOut />
+              Log Out
+            </button>
+          </div>
         </aside>
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 w-full ml-0 md:ml-56 lg:ml-64 transition-all duration-300">

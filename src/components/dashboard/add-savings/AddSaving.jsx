@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FiEye, FiEyeOff, FiTrendingUp } from "react-icons/fi";
 import { FaNairaSign } from "react-icons/fa6";
 import { FaCreditCard, FaCashRegister } from "react-icons/fa";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
 import PaymentMethodCard from "./PaymentMethodCard";
 import PaystackForm from "./PaystackForm";
 import CashDepositForm from "./CashDepositForm";
@@ -14,6 +16,7 @@ import { useMyBookings } from "../../hooks/useInventory";
 import Loader from "../../ui/Loader";
 import { formatDisplayDate } from "../../../utils/date";
 import { formatCurrency } from "../../../utils/currency";
+import { verifySavings } from "../../services/savings";
 
 const quickAmounts = [1000, 2000, 5000, 10000];
 const paystackInstructions = [
@@ -56,9 +59,11 @@ const calculateCompletedBalance = (transactions = []) => {
 };
 
 export default function AddSavings() {
+  const queryClient = useQueryClient();
   const [selectedMethod, setSelectedMethod] = useState("paystack");
   const [showBalance, setShowBalance] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState(null);
+  const attemptedVerifyRefs = useRef(new Set());
 
   const {
     data: summaryResponse,
@@ -119,6 +124,46 @@ export default function AddSavings() {
 
     return mapRecentSavingsToDeposits(fromSummary);
   }, [recentSavingsResponse, summary?.recent_activity]);
+
+  useEffect(() => {
+    const pendingPaystackRefs = history
+      .filter((tx) => {
+        const method = String(tx?.method || "").toLowerCase();
+        const type = String(tx?.type || "").toLowerCase();
+        const status = String(tx?.status || "").toLowerCase();
+        return method === "paystack" && type === "deposit" && status === "pending" && tx?.reference;
+      })
+      .map((tx) => String(tx.reference))
+      .filter((reference) => !attemptedVerifyRefs.current.has(reference))
+      .slice(0, 3);
+
+    if (pendingPaystackRefs.length === 0) return;
+
+    pendingPaystackRefs.forEach((reference) => attemptedVerifyRefs.current.add(reference));
+
+    (async () => {
+      let hasSuccess = false;
+      for (const reference of pendingPaystackRefs) {
+        try {
+          await verifySavings(reference);
+          hasSuccess = true;
+        } catch {
+          // Keep silent here; normal error state remains visible in history.
+        }
+      }
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["customer-summary"] }),
+        queryClient.invalidateQueries({ queryKey: ["recent-savings"] }),
+        queryClient.invalidateQueries({ queryKey: ["savings-history"] }),
+        queryClient.invalidateQueries({ queryKey: ["savings-balance"] }),
+      ]);
+
+      if (hasSuccess) {
+        toast.success("Pending Paystack payments synchronized.");
+      }
+    })();
+  }, [history, queryClient]);
 
   if (summaryLoading) {
     return <Loader />;

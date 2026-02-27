@@ -1,17 +1,46 @@
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Loader from "../ui/Loader";
+import { useVerifySavings } from "../hooks/useVerifySavings";
 
 function DashboardLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
+  const verifyMutation = useVerifySavings();
+  const verifiedRefs = useRef(new Set());
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
   useEffect(() => {
     setIsSidebarOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const reference = params.get("reference") || params.get("trxref");
+
+    if (!reference) return;
+    if (verifyMutation.isPending) return;
+    if (verifiedRefs.current.has(reference)) return;
+
+    verifiedRefs.current.add(reference);
+
+    verifyMutation.mutate(reference, {
+      onSuccess: () => {
+        const cleaned = new URLSearchParams(location.search);
+        cleaned.delete("reference");
+        cleaned.delete("trxref");
+        cleaned.delete("payment");
+        const nextQuery = cleaned.toString();
+        const nextUrl = `${location.pathname}${nextQuery ? `?${nextQuery}` : ""}`;
+        window.history.replaceState({}, "", nextUrl);
+      },
+      onError: () => {
+        verifiedRefs.current.delete(reference);
+      },
+    });
+  }, [location.pathname, location.search, verifyMutation]);
 
   return (
     <div className="h-screen bg-neutral-100 overflow-hidden">

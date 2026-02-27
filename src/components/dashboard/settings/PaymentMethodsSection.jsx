@@ -16,7 +16,16 @@ const normalizeBankAccounts = (response) => {
 
   if (!Array.isArray(source)) return [];
   if (source.length === 0) return [];
-  return [source[source.length - 1]];
+  const latest = source[source.length - 1] || {};
+  return [
+    {
+      accountNumber:
+        latest?.accountNumber || latest?.account_number || "",
+      bankName: latest?.bankName || latest?.bank_name || "",
+      bankCode: latest?.bankCode || latest?.bank_code || "",
+      accountName: latest?.accountName || latest?.account_name || "",
+    },
+  ];
 };
 
 export default function PaymentMethodsSection() {
@@ -78,13 +87,16 @@ export default function PaymentMethodsSection() {
       {accounts.map((account, idx) => (
         <div
           key={account.id || idx}
-          className="flex justify-between items-center border p-4 rounded-xl mb-3"
+          className="flex justify-between items-center border p-4 rounded-xl mb-3 bg-neutral-50/60"
         >
           <div>
-            <p className="font-medium">
+            <p className="font-medium text-neutral-900">
               **** **** **** {String(account.accountNumber || "").slice(-4)}
             </p>
-            <p className="text-sm text-neutral-500">{account.bankName}</p>
+            <p className="text-sm text-neutral-600 mt-0.5">{account.bankName}</p>
+            <p className="text-xs text-neutral-500 mt-1">
+              Account Name: {account.accountName || "-"}
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs bg-neutral-200 px-2 py-1 rounded">

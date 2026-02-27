@@ -9,7 +9,6 @@ function Contact() {
       <Navbar />
 
       <section className="bg-[#f8fafc] min-h-screen flex flex-col justify-between">
-        {/* Hero */}
         <div className="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center">
           <h1 className="text-5xl font-bold text-gray-900">
             Get in <span className="text-green-600">Touch</span>
@@ -22,9 +21,7 @@ function Contact() {
           </p>
         </div>
 
-        {/* Cards */}
         <div className="max-w-5xl mx-auto px-6 pb-24 grid md:grid-cols-2 gap-12">
-          {/* Email Card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-10 text-center">
             <div className="w-14 h-14 mx-auto flex items-center justify-center rounded-full bg-green-100 mb-6">
               <HiOutlineMail className="text-green-600 text-2xl" />
@@ -43,7 +40,6 @@ function Contact() {
             </p>
           </div>
 
-          {/* Phone Card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-10 text-center">
             <div className="w-14 h-14 mx-auto flex items-center justify-center rounded-full bg-indigo-100 mb-6">
               <FiPhone className="text-indigo-600 text-2xl" />
